@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/proto_test.dir/src/proto_test.cpp.o CMakeFiles/proto_test.dir/proto/student.pb.cc.o  -o ../../../src/protobuf/bin/proto_test  -Wl,-rpath,/home/llx/learning/cmake_learning/src/protobuf/lib:/usr/local/lib ../../../src/protobuf/lib/libprotobuf_test.so /usr/local/lib/libprotobuf.so -lpthread 

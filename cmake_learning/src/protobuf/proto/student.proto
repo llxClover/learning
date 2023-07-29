@@ -1,0 +1,81 @@
+syntax = "proto3";  
+// 不指定的proto语法版本，会报错，有些旧教程没给出。
+// No syntax specified for the proto file: student.proto. 
+// Please use 'syntax = "proto2";' or 'syntax = "proto3";' 
+// to specify a syntax version. (Defaulted to proto2 syntax.)
+
+package protobuf_learning; // 这个声明是为了防止不同的项目之间的命名冲突,
+                           // 在C++中，该.proto文件生成的类将存放在与一
+                           // 个和package同名的命名空间中
+
+message Student {               // 消息定义
+    uint64 id = 1;    // 必须提供的字段。in proto2: 修饰符 required已经弃用 
+    string name = 2;  // uint64 string等，属于 标准字段类型
+    // proto3.15 之后 仅仅支持repeated、optional字段修饰
+    // ProtoBuf v3.15.0 正式重新引入了 optional 关键字
+    // protoBuf3之前的所有v3版本，不支持optional
+    optional string email = 3; // 修饰符 optional: 可选择是否提供
+    
+    // 唯一编号 =1,=2,... 用于标识二进制格式字段
+    // 1-15的编号的字段，需要一个字节进行编码，16-2047的需要两个字节
+    // 珍惜使用0-15编号，留给那些频繁出现的消息
+
+    enum PhoneType {  // 枚举消息类型 enum: protobuf3中规定第一个必须是编号0 
+        MOBILE = 0;
+        HOME = 1;
+    }
+
+    message PhoneNumber {       // 一个message也可以充当 字段类型
+        string number = 1; 
+        optional PhoneType type = 2; 
+        
+        // in proto2: optional PhoneType type = 2 [default = HOME]; 
+        // Explicit default values are not allowed in proto3.
+    }
+    repeated PhoneNumber phone = 4;  // 修饰符 repeated: 字段要重复N次填充，
+                                     // 就是一个像动态数组的东西
+
+}
+
+// --------编译----------
+// protoc 编译.proto 文件后，会“自动生成”一个头文件（定义proto文件中的消息类）
+// 和一个源文件(实现proto文件生成的头文件中的消息类)
+
+// 编译指令： protoc -I$SRC_DIR --cpp_out=$DST_DIR student.proto
+// SRC_DIR：proto文件目录， DST_DIR： 生成代码文件的目录（通常与proto文件在一起）
+
+// 该实例的编译指令为： protoc student.proto --cpp_out=./
+
+
+
+// 一些API指令：
+// https://protobuf.dev/reference/cpp/api-docs/google.protobuf.message/#Message
+// CopyFrom(const Message & from)；
+// MergeFrom(const Message & from)；
+// CheckInitialized() const；
+// DebugString() const
+// ......
+
+
+// “重要”： 序列化 & 反序列化 函数
+
+// 将消息序列化并储存在指定的string中。注意里面的内容是二进制的，
+// 而不是文本；我们只是使用string作为一个很方便的容器。
+// bool SerializeToString(string* output) const;
+
+// 从给定的string解析消息。
+// bool ParseFromString(const string& data);
+
+//将消息序列化至数组
+// bool SerializeToArray(void * data, int size) const；	
+
+// 从数组解析消息
+// bool ParseFromArray(const void * data, int size)	
+
+//将消息写入到给定的C++ ostream中。
+// bool SerializeToOstream(ostream* output) const; 
+
+//从给定的C++ istream解析消息。
+// bool ParseFromIstream(istream* input); 
+
+
