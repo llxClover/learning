@@ -1,2 +1,0 @@
-/usr/bin/ar qc ../../../src/print_hello_world/lib/libprint_hello_world_static.a  CMakeFiles/print_hello_world_static.dir/src/print_hello_world.cpp.o
-/usr/bin/ranlib ../../../src/print_hello_world/lib/libprint_hello_world_static.a

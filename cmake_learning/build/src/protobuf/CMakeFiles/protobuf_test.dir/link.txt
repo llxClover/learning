@@ -1,1 +1,0 @@
-/usr/bin/g++ -fPIC -g  -shared -Wl,-soname,libprotobuf_test.so -o ../../../src/protobuf/lib/libprotobuf_test.so CMakeFiles/protobuf_test.dir/src/proto_test.cpp.o 
