@@ -150,6 +150,19 @@ hello_world/fast:
 .PHONY : hello_world/fast
 
 #=============================================================================
+# Target rules for targets named print_hello_world_static
+
+# Build rule for target.
+print_hello_world_static: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 print_hello_world_static
+.PHONY : print_hello_world_static
+
+# fast build rule for target.
+print_hello_world_static/fast:
+	$(MAKE) -f src/print_hello_world/CMakeFiles/print_hello_world_static.dir/build.make src/print_hello_world/CMakeFiles/print_hello_world_static.dir/build
+.PHONY : print_hello_world_static/fast
+
+#=============================================================================
 # Target rules for targets named print_hello_world
 
 # Build rule for target.
@@ -173,6 +186,7 @@ help:
 	@echo "... proto_test"
 	@echo "... protobuf_test"
 	@echo "... hello_world"
+	@echo "... print_hello_world_static"
 	@echo "... print_hello_world"
 .PHONY : help
 

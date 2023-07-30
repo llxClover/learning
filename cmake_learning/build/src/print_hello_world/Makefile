@@ -126,6 +126,21 @@ hello_world/fast:
 .PHONY : hello_world/fast
 
 # Convenience name for target.
+src/print_hello_world/CMakeFiles/print_hello_world_static.dir/rule:
+	cd /home/llx/learning/cmake_learning/build && $(MAKE) -f CMakeFiles/Makefile2 src/print_hello_world/CMakeFiles/print_hello_world_static.dir/rule
+.PHONY : src/print_hello_world/CMakeFiles/print_hello_world_static.dir/rule
+
+# Convenience name for target.
+print_hello_world_static: src/print_hello_world/CMakeFiles/print_hello_world_static.dir/rule
+
+.PHONY : print_hello_world_static
+
+# fast build rule for target.
+print_hello_world_static/fast:
+	cd /home/llx/learning/cmake_learning/build && $(MAKE) -f src/print_hello_world/CMakeFiles/print_hello_world_static.dir/build.make src/print_hello_world/CMakeFiles/print_hello_world_static.dir/build
+.PHONY : print_hello_world_static/fast
+
+# Convenience name for target.
 src/print_hello_world/CMakeFiles/print_hello_world.dir/rule:
 	cd /home/llx/learning/cmake_learning/build && $(MAKE) -f CMakeFiles/Makefile2 src/print_hello_world/CMakeFiles/print_hello_world.dir/rule
 .PHONY : src/print_hello_world/CMakeFiles/print_hello_world.dir/rule
@@ -147,6 +162,7 @@ src/print_hello_world.o: src/print_hello_world.cpp.o
 # target to build an object file
 src/print_hello_world.cpp.o:
 	cd /home/llx/learning/cmake_learning/build && $(MAKE) -f src/print_hello_world/CMakeFiles/hello_world.dir/build.make src/print_hello_world/CMakeFiles/hello_world.dir/src/print_hello_world.cpp.o
+	cd /home/llx/learning/cmake_learning/build && $(MAKE) -f src/print_hello_world/CMakeFiles/print_hello_world_static.dir/build.make src/print_hello_world/CMakeFiles/print_hello_world_static.dir/src/print_hello_world.cpp.o
 	cd /home/llx/learning/cmake_learning/build && $(MAKE) -f src/print_hello_world/CMakeFiles/print_hello_world.dir/build.make src/print_hello_world/CMakeFiles/print_hello_world.dir/src/print_hello_world.cpp.o
 .PHONY : src/print_hello_world.cpp.o
 
@@ -157,6 +173,7 @@ src/print_hello_world.i: src/print_hello_world.cpp.i
 # target to preprocess a source file
 src/print_hello_world.cpp.i:
 	cd /home/llx/learning/cmake_learning/build && $(MAKE) -f src/print_hello_world/CMakeFiles/hello_world.dir/build.make src/print_hello_world/CMakeFiles/hello_world.dir/src/print_hello_world.cpp.i
+	cd /home/llx/learning/cmake_learning/build && $(MAKE) -f src/print_hello_world/CMakeFiles/print_hello_world_static.dir/build.make src/print_hello_world/CMakeFiles/print_hello_world_static.dir/src/print_hello_world.cpp.i
 	cd /home/llx/learning/cmake_learning/build && $(MAKE) -f src/print_hello_world/CMakeFiles/print_hello_world.dir/build.make src/print_hello_world/CMakeFiles/print_hello_world.dir/src/print_hello_world.cpp.i
 .PHONY : src/print_hello_world.cpp.i
 
@@ -167,6 +184,7 @@ src/print_hello_world.s: src/print_hello_world.cpp.s
 # target to generate assembly for a file
 src/print_hello_world.cpp.s:
 	cd /home/llx/learning/cmake_learning/build && $(MAKE) -f src/print_hello_world/CMakeFiles/hello_world.dir/build.make src/print_hello_world/CMakeFiles/hello_world.dir/src/print_hello_world.cpp.s
+	cd /home/llx/learning/cmake_learning/build && $(MAKE) -f src/print_hello_world/CMakeFiles/print_hello_world_static.dir/build.make src/print_hello_world/CMakeFiles/print_hello_world_static.dir/src/print_hello_world.cpp.s
 	cd /home/llx/learning/cmake_learning/build && $(MAKE) -f src/print_hello_world/CMakeFiles/print_hello_world.dir/build.make src/print_hello_world/CMakeFiles/print_hello_world.dir/src/print_hello_world.cpp.s
 .PHONY : src/print_hello_world.cpp.s
 
@@ -179,6 +197,7 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... hello_world"
+	@echo "... print_hello_world_static"
 	@echo "... print_hello_world"
 	@echo "... src/print_hello_world.o"
 	@echo "... src/print_hello_world.i"

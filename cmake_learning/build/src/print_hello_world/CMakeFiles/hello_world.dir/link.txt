@@ -1,1 +1,1 @@
-/usr/bin/c++    -rdynamic CMakeFiles/hello_world.dir/src/print_hello_world.cpp.o  -o ../../../src/print_hello_world/bin/hello_world  -Wl,-rpath,/home/llx/learning/cmake_learning/src/print_hello_world/lib ../../../src/print_hello_world/lib/libprint_hello_world.so 
+/usr/bin/g++  -g  -rdynamic CMakeFiles/hello_world.dir/src/print_hello_world.cpp.o  -o ../../../src/print_hello_world/bin/hello_world  -Wl,-rpath,/home/llx/learning/cmake_learning/src/print_hello_world/lib ../../../src/print_hello_world/lib/libprint_hello_world.so 

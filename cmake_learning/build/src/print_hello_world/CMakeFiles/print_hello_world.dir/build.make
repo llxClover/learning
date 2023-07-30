@@ -60,15 +60,15 @@ include src/print_hello_world/CMakeFiles/print_hello_world.dir/flags.make
 src/print_hello_world/CMakeFiles/print_hello_world.dir/src/print_hello_world.cpp.o: src/print_hello_world/CMakeFiles/print_hello_world.dir/flags.make
 src/print_hello_world/CMakeFiles/print_hello_world.dir/src/print_hello_world.cpp.o: ../src/print_hello_world/src/print_hello_world.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/llx/learning/cmake_learning/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object src/print_hello_world/CMakeFiles/print_hello_world.dir/src/print_hello_world.cpp.o"
-	cd /home/llx/learning/cmake_learning/build/src/print_hello_world && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/print_hello_world.dir/src/print_hello_world.cpp.o -c /home/llx/learning/cmake_learning/src/print_hello_world/src/print_hello_world.cpp
+	cd /home/llx/learning/cmake_learning/build/src/print_hello_world && /usr/bin/g++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/print_hello_world.dir/src/print_hello_world.cpp.o -c /home/llx/learning/cmake_learning/src/print_hello_world/src/print_hello_world.cpp
 
 src/print_hello_world/CMakeFiles/print_hello_world.dir/src/print_hello_world.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/print_hello_world.dir/src/print_hello_world.cpp.i"
-	cd /home/llx/learning/cmake_learning/build/src/print_hello_world && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/llx/learning/cmake_learning/src/print_hello_world/src/print_hello_world.cpp > CMakeFiles/print_hello_world.dir/src/print_hello_world.cpp.i
+	cd /home/llx/learning/cmake_learning/build/src/print_hello_world && /usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/llx/learning/cmake_learning/src/print_hello_world/src/print_hello_world.cpp > CMakeFiles/print_hello_world.dir/src/print_hello_world.cpp.i
 
 src/print_hello_world/CMakeFiles/print_hello_world.dir/src/print_hello_world.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/print_hello_world.dir/src/print_hello_world.cpp.s"
-	cd /home/llx/learning/cmake_learning/build/src/print_hello_world && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/llx/learning/cmake_learning/src/print_hello_world/src/print_hello_world.cpp -o CMakeFiles/print_hello_world.dir/src/print_hello_world.cpp.s
+	cd /home/llx/learning/cmake_learning/build/src/print_hello_world && /usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/llx/learning/cmake_learning/src/print_hello_world/src/print_hello_world.cpp -o CMakeFiles/print_hello_world.dir/src/print_hello_world.cpp.s
 
 # Object files for target print_hello_world
 print_hello_world_OBJECTS = \

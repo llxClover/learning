@@ -60,28 +60,28 @@ include src/protobuf/CMakeFiles/proto_test.dir/flags.make
 src/protobuf/CMakeFiles/proto_test.dir/src/proto_test.cpp.o: src/protobuf/CMakeFiles/proto_test.dir/flags.make
 src/protobuf/CMakeFiles/proto_test.dir/src/proto_test.cpp.o: ../src/protobuf/src/proto_test.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/llx/learning/cmake_learning/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object src/protobuf/CMakeFiles/proto_test.dir/src/proto_test.cpp.o"
-	cd /home/llx/learning/cmake_learning/build/src/protobuf && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/proto_test.dir/src/proto_test.cpp.o -c /home/llx/learning/cmake_learning/src/protobuf/src/proto_test.cpp
+	cd /home/llx/learning/cmake_learning/build/src/protobuf && /usr/bin/g++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/proto_test.dir/src/proto_test.cpp.o -c /home/llx/learning/cmake_learning/src/protobuf/src/proto_test.cpp
 
 src/protobuf/CMakeFiles/proto_test.dir/src/proto_test.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/proto_test.dir/src/proto_test.cpp.i"
-	cd /home/llx/learning/cmake_learning/build/src/protobuf && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/llx/learning/cmake_learning/src/protobuf/src/proto_test.cpp > CMakeFiles/proto_test.dir/src/proto_test.cpp.i
+	cd /home/llx/learning/cmake_learning/build/src/protobuf && /usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/llx/learning/cmake_learning/src/protobuf/src/proto_test.cpp > CMakeFiles/proto_test.dir/src/proto_test.cpp.i
 
 src/protobuf/CMakeFiles/proto_test.dir/src/proto_test.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/proto_test.dir/src/proto_test.cpp.s"
-	cd /home/llx/learning/cmake_learning/build/src/protobuf && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/llx/learning/cmake_learning/src/protobuf/src/proto_test.cpp -o CMakeFiles/proto_test.dir/src/proto_test.cpp.s
+	cd /home/llx/learning/cmake_learning/build/src/protobuf && /usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/llx/learning/cmake_learning/src/protobuf/src/proto_test.cpp -o CMakeFiles/proto_test.dir/src/proto_test.cpp.s
 
 src/protobuf/CMakeFiles/proto_test.dir/proto/student.pb.cc.o: src/protobuf/CMakeFiles/proto_test.dir/flags.make
 src/protobuf/CMakeFiles/proto_test.dir/proto/student.pb.cc.o: ../src/protobuf/proto/student.pb.cc
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/llx/learning/cmake_learning/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object src/protobuf/CMakeFiles/proto_test.dir/proto/student.pb.cc.o"
-	cd /home/llx/learning/cmake_learning/build/src/protobuf && /usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/proto_test.dir/proto/student.pb.cc.o -c /home/llx/learning/cmake_learning/src/protobuf/proto/student.pb.cc
+	cd /home/llx/learning/cmake_learning/build/src/protobuf && /usr/bin/g++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/proto_test.dir/proto/student.pb.cc.o -c /home/llx/learning/cmake_learning/src/protobuf/proto/student.pb.cc
 
 src/protobuf/CMakeFiles/proto_test.dir/proto/student.pb.cc.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/proto_test.dir/proto/student.pb.cc.i"
-	cd /home/llx/learning/cmake_learning/build/src/protobuf && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/llx/learning/cmake_learning/src/protobuf/proto/student.pb.cc > CMakeFiles/proto_test.dir/proto/student.pb.cc.i
+	cd /home/llx/learning/cmake_learning/build/src/protobuf && /usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/llx/learning/cmake_learning/src/protobuf/proto/student.pb.cc > CMakeFiles/proto_test.dir/proto/student.pb.cc.i
 
 src/protobuf/CMakeFiles/proto_test.dir/proto/student.pb.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/proto_test.dir/proto/student.pb.cc.s"
-	cd /home/llx/learning/cmake_learning/build/src/protobuf && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/llx/learning/cmake_learning/src/protobuf/proto/student.pb.cc -o CMakeFiles/proto_test.dir/proto/student.pb.cc.s
+	cd /home/llx/learning/cmake_learning/build/src/protobuf && /usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/llx/learning/cmake_learning/src/protobuf/proto/student.pb.cc -o CMakeFiles/proto_test.dir/proto/student.pb.cc.s
 
 # Object files for target proto_test
 proto_test_OBJECTS = \

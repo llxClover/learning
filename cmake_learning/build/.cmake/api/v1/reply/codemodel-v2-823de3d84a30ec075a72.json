@@ -1,0 +1,147 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2
+					],
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0"
+					},
+					"projectIndex" : 0,
+					"source" : "."
+				},
+				{
+					"build" : "src/protobuf",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "src/protobuf",
+					"targetIndexes" : 
+					[
+						3,
+						4
+					]
+				},
+				{
+					"build" : "src/print_hello_world",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 2,
+					"source" : "src/print_hello_world",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1,
+						2
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "cmake_test"
+				},
+				{
+					"directoryIndexes" : 
+					[
+						1
+					],
+					"name" : "protobuf_test",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						3,
+						4
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						2
+					],
+					"name" : "print_hello_world",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 2,
+					"id" : "hello_world::@861cb376cd960bae8fc9",
+					"jsonFile" : "target-hello_world-Debug-456fe19fc94332668b8e.json",
+					"name" : "hello_world",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "print_hello_world::@861cb376cd960bae8fc9",
+					"jsonFile" : "target-print_hello_world-Debug-e5a9eff7ed8e8e68aff2.json",
+					"name" : "print_hello_world",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "print_hello_world_static::@861cb376cd960bae8fc9",
+					"jsonFile" : "target-print_hello_world_static-Debug-2ab386d59069f132af90.json",
+					"name" : "print_hello_world_static",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "proto_test::@a5ee7ec986a413963168",
+					"jsonFile" : "target-proto_test-Debug-b57c70d34d0a84688a3e.json",
+					"name" : "proto_test",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "protobuf_test::@a5ee7ec986a413963168",
+					"jsonFile" : "target-protobuf_test-Debug-60814dd526f1822f1023.json",
+					"name" : "protobuf_test",
+					"projectIndex" : 1
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/llx/learning/cmake_learning/build",
+		"source" : "/home/llx/learning/cmake_learning"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 0
+	}
+}

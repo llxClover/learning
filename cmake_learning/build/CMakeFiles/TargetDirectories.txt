@@ -7,4 +7,5 @@
 /home/llx/learning/cmake_learning/build/src/print_hello_world/CMakeFiles/rebuild_cache.dir
 /home/llx/learning/cmake_learning/build/src/print_hello_world/CMakeFiles/edit_cache.dir
 /home/llx/learning/cmake_learning/build/src/print_hello_world/CMakeFiles/hello_world.dir
+/home/llx/learning/cmake_learning/build/src/print_hello_world/CMakeFiles/print_hello_world_static.dir
 /home/llx/learning/cmake_learning/build/src/print_hello_world/CMakeFiles/print_hello_world.dir
