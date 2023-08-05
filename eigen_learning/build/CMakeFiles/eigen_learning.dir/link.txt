@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC   -shared -Wl,-soname,libeigen_learning.so -o ../lib/libeigen_learning.so CMakeFiles/eigen_learning.dir/src/eigen_learning.cpp.o   -L/home/llx/learning/eigen_learning/lib  -Wl,-rpath,/home/llx/learning/eigen_learning/lib -leigen_learning 
