@@ -1,1 +1,1 @@
-/usr/bin/c++    -rdynamic CMakeFiles/eigen_test.dir/src/eigen_learning.cpp.o  -o ../bin/eigen_test 
+/usr/bin/g++  -g  -rdynamic CMakeFiles/eigen_test.dir/src/eigen_learning.cpp.o  -o ../bin/eigen_test 

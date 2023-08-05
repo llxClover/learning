@@ -60,15 +60,15 @@ include CMakeFiles/eigen_test.dir/flags.make
 CMakeFiles/eigen_test.dir/src/eigen_learning.cpp.o: CMakeFiles/eigen_test.dir/flags.make
 CMakeFiles/eigen_test.dir/src/eigen_learning.cpp.o: ../src/eigen_learning.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/llx/learning/eigen_learning/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/eigen_test.dir/src/eigen_learning.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/eigen_test.dir/src/eigen_learning.cpp.o -c /home/llx/learning/eigen_learning/src/eigen_learning.cpp
+	/usr/bin/g++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/eigen_test.dir/src/eigen_learning.cpp.o -c /home/llx/learning/eigen_learning/src/eigen_learning.cpp
 
 CMakeFiles/eigen_test.dir/src/eigen_learning.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/eigen_test.dir/src/eigen_learning.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/llx/learning/eigen_learning/src/eigen_learning.cpp > CMakeFiles/eigen_test.dir/src/eigen_learning.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/llx/learning/eigen_learning/src/eigen_learning.cpp > CMakeFiles/eigen_test.dir/src/eigen_learning.cpp.i
 
 CMakeFiles/eigen_test.dir/src/eigen_learning.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/eigen_test.dir/src/eigen_learning.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/llx/learning/eigen_learning/src/eigen_learning.cpp -o CMakeFiles/eigen_test.dir/src/eigen_learning.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/llx/learning/eigen_learning/src/eigen_learning.cpp -o CMakeFiles/eigen_test.dir/src/eigen_learning.cpp.s
 
 # Object files for target eigen_test
 eigen_test_OBJECTS = \

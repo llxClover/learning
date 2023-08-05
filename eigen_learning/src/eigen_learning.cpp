@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 
   v_3d << 3, 2, 1;
 
-  //矩阵相乘  //note: 强制数据转换  data.cast<double>()
+  //矩阵相乘  //note: 强制数据转换  data.cast<double>() eigen内部不支持自动数据转换
   Eigen::Matrix<double, 2, 1> result = matrix_23.cast<double>() * v_3d;
   std::cout << result << std::endl;
 
