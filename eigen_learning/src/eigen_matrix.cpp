@@ -4,7 +4,7 @@
  * @Created Date   :     2023/08/05/
  * @Email          :     lilinxiang@tsari.tsinghua.edu.cn
  *
- * @file           :     eigen_learning.cpp
+ * @file           :     eigen_matrix.cpp
  * @brief          :     learning libeigen matrix operation
  * ===================================================================*/
 #include <ctime> // 计时
