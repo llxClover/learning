@@ -20,6 +20,9 @@ add_library(eigen_geometry_learning SHARED src/eigen_geometry.cpp)
 add_executable(eigen_geometry src/eigen_geometry.cpp)
 target_link_libraries(eigen_geometry eigen_geometry_learning)
 
+add_library(coordinate_transform SHARED src/coordinate_transform.cpp)
+add_executable(coordinate_transform_test src/coordinate_transform.cpp)
+target_link_libraries(coordinate_transform_test coordinate_transform)
 
 # cmake报错:主要是生成的可执行文件名称和生成的库文件名称是一样而导致的错误
 # add_executable cannot create target "eigen_learning" because another target
