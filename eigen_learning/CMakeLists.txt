@@ -7,14 +7,18 @@ set(CMAKE_CXX_STANDARD 17)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
-# # 生成动态库
-add_library(${PROJECT_NAME} SHARED src/eigen_learning.cpp)
+
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories("/usr/include/eigen3")
-add_executable(eigen_test src/eigen_learning.cpp)
 
-target_link_libraries(eigen_learning ${PROJECT_SOURCE_DIR}/lib/lib${PROJECT_NAME}.so)
+add_library(eigen_matrix_learning SHARED src/eigen_matrix.cpp)
+add_executable(eigen_matrix src/eigen_matrix.cpp)
+target_link_libraries(eigen_matrix eigen_matrix_learning)
+
+add_library(eigen_geometry_learning SHARED src/eigen_geometry.cpp)
+add_executable(eigen_geometry src/eigen_geometry.cpp)
+target_link_libraries(eigen_geometry eigen_geometry_learning)
 
 
 # cmake报错:主要是生成的可执行文件名称和生成的库文件名称是一样而导致的错误
