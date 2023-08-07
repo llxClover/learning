@@ -1,7 +1,7 @@
 /* ==================================================================
  * Copyright (c) 2023 lilinxiang. All rights reserved.
  * @Author         :     lilinxiang
- * @Created Date   :     2023/xx/xx/
+ * @Created Date   :     2023/08/07
  * @Email          :     lilinxiang@tsari.tsinghua.edu.cn
  *
  * @file           :     trajectory_error.cpp

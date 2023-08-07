@@ -1,3 +1,12 @@
+/* ==================================================================
+* Copyright (c) 2023 lilinxiang. All rights reserved.
+* @Author         :     lilinxiang
+* @Created Date   :     2023/08/06
+* @Email          :     lilinxiang@tsari.tsinghua.edu.cn
+* 
+* @file           :     sophus_learning.cpp
+* @brief          :     learning sophus essential operation
+* ===================================================================*/
 #include <cmath>
 #include <iostream>
 
