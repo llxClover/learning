@@ -17,3 +17,7 @@ include_directories("/usr/local/include")
 add_library(sophusLearning SHARED src/sophus_learning.cpp)
 add_executable(sophus_learning src/sophus_learning.cpp)
 target_link_libraries(sophus_learning sophusLearning fmt)
+
+add_library(trahectoryError SHARED src/trajectory_error.cpp)
+add_executable(trahectory_error src/trajectory_error.cpp)
+target_link_libraries(trahectory_error sophusLearning fmt)
