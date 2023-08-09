@@ -1,12 +1,12 @@
 /* ==================================================================
-* Copyright (c) 2023 lilinxiang. All rights reserved.
-* @Author         :     lilinxiang
-* @Created Date   :     2023/08/06
-* @Email          :     lilinxiang@tsari.tsinghua.edu.cn
-* 
-* @file           :     sophus_learning.cpp
-* @brief          :     learning sophus essential operation
-* ===================================================================*/
+ * Copyright (c) 2023 lilinxiang. All rights reserved.
+ * @Author         :     lilinxiang
+ * @Created Date   :     2023/08/06
+ * @Email          :     lilinxiang@tsari.tsinghua.edu.cn
+ *
+ * @file           :     sophus_learning.cpp
+ * @brief          :     learning sophus essential operation
+ * ===================================================================*/
 #include <cmath>
 #include <iostream>
 
@@ -54,6 +54,15 @@ int main(int argc, char const *argv[]) {
   Sophus::SE3d SE3_qt(q, t);
   std::cout << "SE3 structed from (R,t) : \n" << SE3_Rt.matrix() << std::endl;
   std::cout << "SE3 structed from (q,t) : \n" << SE3_qt.matrix() << std::endl;
+  std::cout << "T : \n" << SE3_Rt.matrix() << std::endl;
+  std::cout << "R : \n" << SE3_Rt.rotationMatrix().matrix() << std::endl;
+  std::cout << "R(0,0) : \n"
+            << SE3_Rt.rotationMatrix().matrix()(0, 0) << std::endl;
+  std::cout << "R(2,2) : \n"
+            << SE3_Rt.rotationMatrix().matrix()(2, 2) << std::endl;
+  std::cout << "t : \n" << SE3_Rt.translation().transpose() << std::endl;
+  std::cout << "t(0) : \n" << SE3_Rt.translation().transpose()(0) << std::endl;
+  std::cout << "t(2) : \n" << SE3_Rt.translation().transpose()(2) << std::endl;
   // 李代数se(3)是6维向量
   Eigen::VectorXd se3 = SE3_Rt.log();
   std::cout << "se3= " << se3.transpose() << std::endl;
