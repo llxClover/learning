@@ -9,6 +9,7 @@
  * ===================================================================*/
 #include <chrono>
 #include <iostream>
+#include <functional>
 
 #include <ceres/ceres.h>
 #include <opencv2/core/core.hpp>
