@@ -38,3 +38,8 @@ target_link_libraries(gauss_newton gaussNewton ${OpenCV_LIBS} ${PYTHON_LIBRARIES
 add_library(ceresLearning SHARED src/ceres_learning.cpp)
 add_executable(ceres_learning src/ceres_learning.cpp)
 target_link_libraries(ceres_learning ceresLearning ${OpenCV_LIBS} ${PYTHON_LIBRARIES} ${CERES_LIBRARIES})
+
+# ceres_learning_v1.cpp
+add_library(ceresLearningv1 SHARED src/ceres_learning_v1.cpp)
+add_executable(ceres_learningv1 src/ceres_learning_v1.cpp)
+target_link_libraries(ceres_learningv1 ceresLearningv1 ${OpenCV_LIBS} ${PYTHON_LIBRARIES} ${CERES_LIBRARIES})
