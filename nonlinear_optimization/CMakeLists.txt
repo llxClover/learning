@@ -2,12 +2,12 @@ cmake_minimum_required(VERSION 3.0)
 
 project(nonlinear_optimization_learning)
 
-
+set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_STANDARD 20)
 
 # 设置g2o编译时的cmake_modules路径,否则会找不到g2o-config.cmake，G2OConfig.cmake
-LIST( APPEND CMAKE_MODULE_PATH /home/llx/Downloads/g2o/cmake_modules )
-
+LIST( APPEND CMAKE_MODULE_PATH /home/llx/Downloads/g2o-20200410/cmake_modules )
+# LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 # opencv
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
@@ -22,6 +22,7 @@ include_directories("usr/local/include/ceres")
 #g2o
 find_package(G2O REQUIRED)
 include_directories("usr/local/include/g2o")
+include_directories(${G2O_INCLUDE_DIRS})
 
 #glog
 find_package(GLOG REQUIRED)
