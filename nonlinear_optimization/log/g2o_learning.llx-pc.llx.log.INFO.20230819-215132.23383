@@ -1,0 +1,8 @@
+Log file created at: 2023/08/19 21:51:32
+Running on machine: llx-pc
+Running duration (h:mm:ss): 0:00:00
+Log line format: [IWEF]yyyymmdd hh:mm:ss.uuuuuu threadid file:line] msg
+I20230819 21:51:32.031029 23383 g2o_learning.cpp:217] =====  g2o learning  =====
+I20230819 21:51:32.031289 23383 g2o_learning.cpp:146] ====== start optimization ======
+I20230819 21:51:32.031570 23383 g2o_learning.cpp:155] ===> time used is :  0.000277239s. 
+I20230819 21:51:32.031574 23383 g2o_learning.cpp:162] ===> estimated abc is :  -18.6981  5.57719        5

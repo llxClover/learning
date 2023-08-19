@@ -24,7 +24,7 @@
 #include <opencv2/core/core.hpp>
 
 namespace plt = matplotlibcpp;
-
+using namespace std;
 // 原函数
 std::function<double(double, double, double, double)> func =
     [](double a, double b, double c, double x) -> double {
@@ -52,7 +52,9 @@ public:
 // edge模版重载：观测数据维度，数据类型，连接的vertex类型
 class CurveFittingEdge
     : public g2o::BaseUnaryEdge<1, double, CurveFittingVertex> {
+public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   CurveFittingEdge(double x) : BaseUnaryEdge(), x_(x) {}
   // 计算曲线的误差模型
   virtual void computeError() override {
@@ -67,11 +69,12 @@ class CurveFittingEdge
         static_cast<const CurveFittingVertex *>(_vertices[0]);
     const Eigen::Vector3d abc = vertex->estimate();
     double y = func(abc[0], abc[1], abc[2], x_);
+    // 计算Jacobian
     _jacobianOplusXi[0] = -x_ * x_ * y;
     _jacobianOplusXi[1] = -x_ * y;
-    _jacobianOplusXi[0] = -y;
+    _jacobianOplusXi[2] = -y;
   }
-  // 计算Jacobian
+
   // 存盘和读盘：留空
   virtual bool read(std::istream &in) override {}
 
@@ -81,12 +84,9 @@ public:
   double x_; // x 值， y 值为 _measurement
 };
 
-int main(int argc, char const *argv[]) {
-  DLOG(INFO) << "=====  g2o learning  =====";
-  return 0;
-}
-
 class G2oCurveFitting {
+  friend int main(int argc, char const *argv[]);
+
 private:
   // 函数参数
   double a_r = 1.0, b_r = 2.0, c_r = 1.0; // 真实曲线参数a，b，c
@@ -115,9 +115,9 @@ public:
   ~G2oCurveFitting();
 };
 
-G2oCurveFitting::G2oCurveFitting() {}
-
 G2oCurveFitting::G2oCurveFitting() {
+
+  G2oCurveFitting::GenerateData(this->N);
   // 梯度下降方法：有GN，LM，DogLeg法可选
   auto solver = new g2o::OptimizationAlgorithmGaussNewton(
       g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
@@ -125,7 +125,42 @@ G2oCurveFitting::G2oCurveFitting() {
   this->optimizer.setAlgorithm(solver); // 设置求解器
   this->optimizer.setVerbose(true);     // 打开调试输出
 
-  G2oCurveFitting::GenerateData(this->N);
+  // 往图中增加点
+  CurveFittingVertex *vertex = new CurveFittingVertex();
+  vertex->setEstimate(Eigen::Vector3d(abc[0], abc[1], abc[2]));
+  vertex->setId(0);
+  optimizer.addVertex(vertex);
+
+  // 往图中增加边
+  for (int i = 0; i < N; i++) {
+    CurveFittingEdge *edge = new CurveFittingEdge(x_data[i]);
+    edge->setId(i);
+    edge->setVertex(0, vertex);
+    edge->setMeasurement(y_data[i]);
+    // 信息矩阵，协方差矩阵的逆矩阵
+    edge->setInformation(Eigen::Matrix<double, 1, 1>::Identity() * 1 /
+                         (w_sigma * w_sigma));
+    optimizer.addEdge(edge);
+  }
+
+  // 执行优化
+  LOG(INFO) << "====== start optimization ======";
+  std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+  optimizer.initializeOptimization();
+  optimizer.optimize(10);
+  std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+
+  double time_used =
+      std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1)
+          .count();
+  LOG(INFO) << "===> time used is :  " << time_used << "s. ";
+
+  // 输出优化结果
+  Eigen::Vector3d abc_estimated = vertex->estimate();
+  this->abc[0] = abc_estimated[0];
+  this->abc[1] = abc_estimated[1];
+  this->abc[2] = abc_estimated[2];
+  LOG(INFO) << "===> estimated abc is :  " << abc_estimated.transpose();
 }
 
 G2oCurveFitting::~G2oCurveFitting() {}
@@ -170,4 +205,19 @@ void G2oCurveFitting::Draw(const std::string figname) {
   plt::ylabel("y");
   plt::legend();
   plt::show();
+}
+
+int main(int argc, char const *argv[]) {
+  google::InitGoogleLogging(argv[0]);
+  FLAGS_logtostderr = false; //设置日志消息是否转到标准输出而不是日志文件
+  FLAGS_alsologtostderr = true; //设置日志消息除了日志文件之外是否去标准输出
+  FLAGS_log_prefix = true; //设置日志前缀是否应该添加到每行输出
+  FLAGS_log_dir = "../log"; //预创建好
+
+  LOG(INFO) << "=====  g2o learning  =====";
+  G2oCurveFitting g2o_curve_fitting;
+
+  g2o_curve_fitting.Draw("G2O Curve Fitting");
+  google::ShutdownGoogleLogging();
+  return 0;
 }

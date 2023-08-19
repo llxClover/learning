@@ -6,8 +6,7 @@ set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_STANDARD 20)
 
 # 设置g2o编译时的cmake_modules路径,否则会找不到g2o-config.cmake，G2OConfig.cmake
-LIST( APPEND CMAKE_MODULE_PATH /home/llx/Downloads/g2o-20200410/cmake_modules )
-# LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+LIST(APPEND CMAKE_MODULE_PATH /home/llx/Downloads/g2o-20200410/cmake_modules)
 # opencv
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
@@ -74,6 +73,8 @@ target_link_libraries(g2o_learning
                       g2oLearning 
                       ${OpenCV_LIBS} 
                       ${PYTHON_LIBRARIES} 
-                      ${G2O_CORE_LIBRARIES} 
-                      ${G2O_STUFF_LIBRARY} 
-                      ${GLOG_LIBRARIES})
+                      ${GLOG_LIBRARIES}
+                      glog::glog
+                      g2o_core 
+                      g2o_stuff 
+                      )
