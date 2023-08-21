@@ -21,5 +21,6 @@ add_executable(proto_test src/proto_test.cpp proto/student.pb.cc)
 
 target_link_libraries(proto_test 
                       ${PROJECT_NAME} 
+                      protobuf::libprotoc
                       protobuf::libprotobuf
 )
