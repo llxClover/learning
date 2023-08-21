@@ -105,6 +105,14 @@ catkin_package(
 ###########
 ## Build ##
 ###########
+add_executable(${PROJECT_NAME}_image_projection_node src/image_projection.cpp)
+add_dependencies(${PROJECT_NAME}_image_projection_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+target_link_libraries(${PROJECT_NAME}_image_projection_node ${catkin_LIBRARIES} 
+                      ${PCL_LIBRARIES}
+                      ${OpenCV_LIBRARIES} 
+                      ${GLOG_LIBRARIES} 
+                      glog::glog)
+
 add_executable(${PROJECT_NAME}_feature_extraction_node src/feature_extraction.cpp)
 add_dependencies(${PROJECT_NAME}_feature_extraction_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(${PROJECT_NAME}_feature_extraction_node ${catkin_LIBRARIES} 

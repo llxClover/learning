@@ -54,7 +54,6 @@
 #include <sstream>
 #include <thread>
 
-typedef pcl::PointXYZI PointType;
 
 enum class SensorType { RSLIDAR, VELODYNE };
 
@@ -374,7 +373,7 @@ void ImuOrientation2RosPPY(sensor_msgs::Imu &imu, T *r, T *p, T *y) {
  * 输入： 单独点云点
  * 返回：距离
  */
-float PointDistance(PointType p) {
+float PointDistance(pcl::PointXYZI p) {
   return std::sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
 }
 
@@ -384,7 +383,7 @@ float PointDistance(PointType p) {
  * 返回：之间的欧氏距离
  */
 
-float PointDistance(PointType &p1, PointType &p2) {
+float PointDistance(pcl::PointXYZI &p1, pcl::PointXYZI &p2) {
   return std::sqrt((p1.x - p2.x) * (p1.x - p2.x) +
                    (p1.y - p2.y) * (p1.y - p2.y) +
                    (p1.z - p2.z) * (p1.z - p2.z));
