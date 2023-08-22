@@ -34,6 +34,16 @@ private:
   // ros::Subscriber sub_imu_;
 
 private:
+  std::deque<sensor_msgs::PointCloud2> point_cloud_queue_;
+
+  sensor_msgs::PointCloud2 front_point_cloud_;
+  pcl::PointCloud<VelodynePointXYZIRT>::Ptr pcl_point_cloud_in_;
+
+  std_msgs::Header front_point_cloud_header_;
+  double front_point_cloud_start_time_;
+  double front_point_cloud_end_time_;
+
+private:
   void
   PointCloudCallback(const sensor_msgs::PointCloud2ConstPtr &pointcloud_in);
   bool CachePointCloud(const sensor_msgs::PointCloud2ConstPtr &pointcloud_in);
@@ -50,12 +60,31 @@ ImageProjection::ImageProjection(/* args */) {
 }
 
 /**
- * 
-*/
+ *
+ */
 bool ImageProjection::CachePointCloud(
-    const sensor_msgs::PointCloud2ConstPtr &pointcloud_in) {
-      
-    }
+    const sensor_msgs::PointCloud2ConstPtr &ros_point_cloud_in) {
+  // 将收到的一帧激光点云存起来
+  point_cloud_queue_.emplace_back(*ros_point_cloud_in);
+  // 点云数据太少，不行啊！
+  if (point_cloud_queue_.size() <= 2) {
+    return false;
+  }
+  // 取最早的一帧激光数据
+  front_point_cloud_ = std::move(point_cloud_queue_.front());
+  point_cloud_queue_.pop_front();
+  if (sensor == SensorType::VELODYNE) {
+    pcl::moveFromROSMsg(front_point_cloud_, *pcl_point_cloud_in_);
+  } else {
+    ROS_ERROR_STREAM("===> 未知的激光雷达型号 <===");
+    ros::shutdown();
+  }
+
+  front_point_cloud_header_ = front_point_cloud_.header;
+  front_point_cloud_start_time_ = front_point_cloud_.header.stamp.toSec();
+  front_point_cloud_end_time_ =
+      front_point_cloud_start_time_ + pcl_point_cloud_in_->end()->timestamp;
+}
 
 bool ImageProjection::Deskew() {}
 
