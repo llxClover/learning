@@ -1,3 +1,8 @@
 {
-    "cmake.sourceDirectory": "/home/llx/learning/LIO_SAM_ws/src/lio-sam"
+    "cmake.sourceDirectory": "/home/llx/learning/LIO_SAM_ws/src/lio-sam",
+    "python.autoComplete.extraPaths": [
+        "/home/llx/learning/LIO_SAM_ws/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages"
+    ],
+    "C_Cpp.default.compilerPath": "/usr/bin/g++"
 }

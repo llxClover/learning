@@ -43,6 +43,9 @@ private:
   double front_point_cloud_start_time_;
   double front_point_cloud_end_time_;
 
+  bool ring_flag_;
+  bool timestamp_flag_;
+
 private:
   void
   PointCloudCallback(const sensor_msgs::PointCloud2ConstPtr &pointcloud_in);
@@ -57,6 +60,8 @@ public:
 ImageProjection::ImageProjection(/* args */) {
   sub_pointcloud_ = nh.subscribe<sensor_msgs::PointCloud2>(
       point_cloud_topic, 10, &ImageProjection::PointCloudCallback, this);
+  ring_flag_ = false;
+  timestamp_flag_ = false;
 }
 
 /**
@@ -84,6 +89,41 @@ bool ImageProjection::CachePointCloud(
   front_point_cloud_start_time_ = front_point_cloud_.header.stamp.toSec();
   front_point_cloud_end_time_ =
       front_point_cloud_start_time_ + pcl_point_cloud_in_->end()->timestamp;
+  // note: 检验是否存在无效的点云数据nan
+  if (ros_point_cloud_in->is_dense == false) {
+    ROS_ERROR(
+        "===> point cloud is not dense format, please remove NaN points!");
+  }
+  // note: 检验ring是否存在
+  if (!ring_flag_) {
+    for (auto filed : front_point_cloud_.fields) {
+      if (filed.name == "ring" || filed.name == "r") {
+        ring_flag_ = true;
+        break;
+      }
+    }
+    
+    if (ring_flag_ == false) {
+      ROS_ERROR("===> point cloud 'ring' channel is unavailable !");
+      ros::shutdown();
+    }
+  }
+  // note: 检验timestamp是否存在
+  if (!timestamp_flag_) {
+    for (auto filed : front_point_cloud_.fields) {
+      if (filed.name == "time" || filed.name == "t" ||
+          filed.name == "timestamp") {
+        timestamp_flag_ = true;
+        break;
+      }
+    }
+
+    if (timestamp_flag_ == false) {
+      ROS_WARN("===> point cloud 'timestamp' is unavailable!");
+    }
+  }
+
+  return true;
 }
 
 bool ImageProjection::Deskew() {}
