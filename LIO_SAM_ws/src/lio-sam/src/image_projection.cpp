@@ -31,13 +31,14 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(
 class ImageProjection : public ParamServer {
 private:
   ros::Subscriber sub_pointcloud_;
-  // ros::Subscriber sub_imu_;
+  ros::Subscriber sub_imu_;
 
 private:
   std::deque<sensor_msgs::PointCloud2> point_cloud_queue_;
+  std::deque<sensor_msgs::Imu> imu_queue_;
 
   sensor_msgs::PointCloud2 front_point_cloud_;
-  pcl::PointCloud<VelodynePointXYZIRT>::Ptr pcl_point_cloud_in_;
+  pcl::PointCloud<VelodynePointXYZIRT>::Ptr pcl_front_point_cloud_in_;
 
   std_msgs::Header front_point_cloud_header_;
   double front_point_cloud_start_time_;
@@ -46,11 +47,16 @@ private:
   bool ring_flag_;
   bool timestamp_flag_;
 
+  std::mutex imu_lock_;
+  std::mutex point_cloud_lock_;
+
 private:
   void
   PointCloudCallback(const sensor_msgs::PointCloud2ConstPtr &pointcloud_in);
   bool CachePointCloud(const sensor_msgs::PointCloud2ConstPtr &pointcloud_in);
   bool Deskew();
+
+  void ImuCallback(const sensor_msgs::ImuConstPtr &imu_in);
 
 public:
   ImageProjection(/* args */);
@@ -62,14 +68,31 @@ ImageProjection::ImageProjection(/* args */) {
       point_cloud_topic, 10, &ImageProjection::PointCloudCallback, this);
   ring_flag_ = false;
   timestamp_flag_ = false;
+
+  sub_imu_ = nh.subscribe<sensor_msgs::Imu>(
+      imu_topic, 100, &ImageProjection::ImuCallback, this);
 }
 
 /**
- *
+ * 将收到的ros格式的imu存入imu数据队列(期间要进行坐标变换)
+*/
+void ImageProjection::ImuCallback(const sensor_msgs::ImuConstPtr &imu_in) {
+  // note: 【重要】将imu数据转换到lidar坐标系
+  sensor_msgs::Imu this_imu = ImuConverter(*imu_in);
+  // note: 队列添加数据时，该队列线程上锁，数据不可用
+  std::lock_guard<std::mutex> lock_1(imu_lock_);
+  imu_queue_.emplace_back(this_imu);
+}
+
+/**
+ * 将收到的ros格式的激光点云存入点云数据队列，并取出队列中最早的一帧数据进行
+ * 点云距离有效性检验，ring、timestamp通道检验
  */
 bool ImageProjection::CachePointCloud(
     const sensor_msgs::PointCloud2ConstPtr &ros_point_cloud_in) {
   // 将收到的一帧激光点云存起来
+  // ?: 这个锁是我自己加的，有问题的话，删除，目前只是看看为什么imu/odom加锁，而lidar不？
+  std::lock_guard<std::mutex> lock_point_cloud_(point_cloud_lock_);
   point_cloud_queue_.emplace_back(*ros_point_cloud_in);
   // 点云数据太少，不行啊！
   if (point_cloud_queue_.size() <= 2) {
@@ -79,7 +102,7 @@ bool ImageProjection::CachePointCloud(
   front_point_cloud_ = std::move(point_cloud_queue_.front());
   point_cloud_queue_.pop_front();
   if (sensor == SensorType::VELODYNE) {
-    pcl::moveFromROSMsg(front_point_cloud_, *pcl_point_cloud_in_);
+    pcl::moveFromROSMsg(front_point_cloud_, *pcl_front_point_cloud_in_);
   } else {
     ROS_ERROR_STREAM("===> 未知的激光雷达型号 <===");
     ros::shutdown();
@@ -87,8 +110,8 @@ bool ImageProjection::CachePointCloud(
 
   front_point_cloud_header_ = front_point_cloud_.header;
   front_point_cloud_start_time_ = front_point_cloud_.header.stamp.toSec();
-  front_point_cloud_end_time_ =
-      front_point_cloud_start_time_ + pcl_point_cloud_in_->end()->timestamp;
+  front_point_cloud_end_time_ = front_point_cloud_start_time_ +
+                                pcl_front_point_cloud_in_->end()->timestamp;
   // note: 检验是否存在无效的点云数据nan
   if (ros_point_cloud_in->is_dense == false) {
     ROS_ERROR(
@@ -102,7 +125,7 @@ bool ImageProjection::CachePointCloud(
         break;
       }
     }
-    
+
     if (ring_flag_ == false) {
       ROS_ERROR("===> point cloud 'ring' channel is unavailable !");
       ros::shutdown();
@@ -126,13 +149,16 @@ bool ImageProjection::CachePointCloud(
   return true;
 }
 
+/**
+ * 使用IMU数据进行点云的运动畸变去除
+ */
 bool ImageProjection::Deskew() {}
 
 void ImageProjection::PointCloudCallback(
     const sensor_msgs::PointCloud2ConstPtr &pointcloud_in) {
 
   if (!ImageProjection::CachePointCloud(pointcloud_in)) {
-    ROS_WARN("===> 第1帧点云还未进行缓存 <===");
+    ROS_WARN("===> 点云格式存在问题，无法加入队列 <===");
     return;
   }
   if (!ImageProjection::Deskew()) {

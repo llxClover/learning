@@ -269,7 +269,7 @@ public:
     usleep(100);
   }
 
-  sensor_msgs::Imu ImuConverter(sensor_msgs::Imu &imu_in) {
+  sensor_msgs::Imu ImuConverter(const sensor_msgs::Imu &imu_in) {
     sensor_msgs::Imu imu_out;
 
     // rotate acc
