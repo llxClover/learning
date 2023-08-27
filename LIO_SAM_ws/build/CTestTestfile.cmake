@@ -1,8 +1,7 @@
 # CMake generated Testfile for 
-# Source directory: /home/llx/learning/LIO_SAM_ws/src
+# Source directory: /home/llx/learning/LIO_SAM_ws/src/lio-sam
 # Build directory: /home/llx/learning/LIO_SAM_ws/build
 # 
 # This file includes the relevant testing commands required for 
 # testing this directory and lists subdirectories to be tested as well.
 subdirs("gtest")
-subdirs("lio-sam")

@@ -48,7 +48,7 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/llx/learning/LIO_SAM_ws/src
+CMAKE_SOURCE_DIR = /home/llx/learning/LIO_SAM_ws/src/lio-sam
 
 # The top-level build directory on which CMake was run.
 CMAKE_BINARY_DIR = /home/llx/learning/LIO_SAM_ws/build
