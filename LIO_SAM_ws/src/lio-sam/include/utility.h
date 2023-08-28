@@ -40,7 +40,8 @@
 #include <pcl_conversions/pcl_conversions.h>
 // eigen
 #include <Eigen/Core>
-
+// opencv
+#include <opencv2/opencv.hpp>
 // system
 #include <algorithm>
 #include <array>

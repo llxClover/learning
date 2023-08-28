@@ -35,6 +35,8 @@ private:
   ros::Subscriber sub_pointcloud_;
   ros::Subscriber sub_imu_;
 
+  ros::Subscriber sub_odom_;
+
 private:
   std::deque<sensor_msgs::PointCloud2> point_cloud_queue_;
   std::deque<sensor_msgs::Imu> imu_queue_;
@@ -61,6 +63,8 @@ private:
   // 存放一帧imu数据点的旋转角
   Eigen::Vector3d *imu_rot_ang_;
 
+  cv::Mat rang_image_;
+
   std::mutex imu_lock_;
   std::mutex point_cloud_lock_;
   std::mutex odom_lock_;
@@ -73,9 +77,12 @@ private:
   bool ImuDeskew();
   bool OdomDeskew();
   void ImuCallback(const sensor_msgs::ImuConstPtr &imu_in);
+  void OdomCallback(const nav_msgs::OdometryConstPtr &odom_in);
 
   void AllocateMemory();
   void ResetParameters();
+
+  void ProjectPointCloud();
 
 public:
   ImageProjection();
@@ -90,6 +97,9 @@ ImageProjection::ImageProjection() {
 
   sub_imu_ = nh.subscribe<sensor_msgs::Imu>(
       imu_topic, 100, &ImageProjection::ImuCallback, this);
+
+  sub_odom_ = nh.subscribe<nav_msgs::Odometry>(
+      odom_topic + "_incremental", 2000, &ImageProjection::OdomCallback, this);
 }
 
 void ImageProjection::AllocateMemory() {
@@ -106,6 +116,8 @@ void ImageProjection::AllocateMemory() {
 
 void ImageProjection::ResetParameters() {
   pcl_front_point_cloud_in_->clear();
+  rang_image_ =
+      cv::Mat(N_SCAN, HORIZON_RESOLUTION, CV_32F, cv::Scalar::all(FLT_MAX));
   imu_pointer_current_ = 0;
 }
 
@@ -120,6 +132,13 @@ void ImageProjection::ImuCallback(const sensor_msgs::ImuConstPtr &imu_in) {
   imu_queue_.emplace_back(this_imu);
 }
 
+/**
+ * imu 预积分odom的回调函数，存入 odom_queue
+ */
+void ImageProjection::OdomCallback(const nav_msgs::OdometryConstPtr &odom_in) {
+  std::lock_guard<std::mutex> lock_2(odom_lock_);
+  odom_queue_.emplace_back(*odom_in);
+}
 /**
  * 将收到的ros格式的激光点云存入点云数据队列，并取出队列中最早的一帧数据进行
  * 点云距离有效性检验，ring、timestamp通道检验
@@ -210,8 +229,9 @@ bool ImageProjection::Deskew() {
 }
 
 /**
- * 进行点云的运动畸变去除
- * 1. imu辅助
+ * 对当前激光帧对应的imu数据进行处理
+ * 1.遍历整个激光帧对应的imu数据，给起始时刻的激光点云赋起始时刻的imu初始位姿
+ * 2.theta = w * dt, 计算每2个imu数据点之间的旋转角，初始时刻为0
  */
 bool ImageProjection::ImuDeskew() {
   std::lock_guard<std::mutex> locker_1(imu_lock_);
@@ -282,6 +302,11 @@ bool ImageProjection::ImuDeskew() {
   cloud_info_.imu_available = true;
 }
 
+/**
+ * 获得一帧激光点云的imu odom(imu预积分获得)，前后时刻总的位姿变换
+ * 1. 遍历整个激光帧对应的imu odom,初始时刻的位置为imu odom对应的初始位姿
+ * 2. 用与激光点云对应的起始时刻位姿，计算整帧之间的位姿变换
+ */
 bool ImageProjection::OdomDeskew() {
   std::lock_guard<std::mutex> lock_2(odom_lock_);
   cloud_info_.odom_available = false;
@@ -381,6 +406,46 @@ void ImageProjection::PointCloudCallback(
   if (!ImageProjection::Deskew()) {
     ROS_WARN("===> 原始点云未进行运动畸变去除 <===");
     return;
+  }
+  ProjectPointCloud();
+}
+
+void ImageProjection::ProjectPointCloud() {
+  int size = pcl_front_point_cloud_in_->points.size();
+
+  for (auto point : pcl_front_point_cloud_in_->points) {
+    pcl::PointXYZI this_point;
+    this_point.x = point.x;
+    this_point.y = point.y;
+    this_point.z = point.z;
+    this_point.intensity = point.intensity;
+    double range = PointDistance(this_point);
+
+    if (range < lidar_min_range || range > lidar_max_range)
+      continue;
+
+    int row_index = point.ring;
+    if (row_index < 0 || row_index > N_SCAN - 1)
+      continue;
+    if (row_index % downsample_rate != 0)
+      continue;
+
+    int column_index = -1;
+    if (sensor == SensorType::VELODYNE || sensor == SensorType::RSLIDAR) {
+      // ?: atan = x/y
+      double horizon_angle =
+          std::atan2(this_point.x, this_point.y) * 180.0 / M_PI;
+      static double angle_res_x = 360.0 / HORIZON_RESOLUTION;
+      column_index = -1 * std::round((horizon_angle - 90.0) / angle_res_x) +
+                     HORIZON_RESOLUTION / 2;
+      if (column_index >= HORIZON_RESOLUTION)
+        column_index -= HORIZON_RESOLUTION;
+    }
+    if (column_index < 0 || column_index >= HORIZON_RESOLUTION)
+      continue;
+    if (rang_image_.at<float>(row_index, column_index) != FLT_MAX)
+      continue;
+      
   }
 }
 
