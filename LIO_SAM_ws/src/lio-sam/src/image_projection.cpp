@@ -54,6 +54,9 @@ private:
   bool ring_flag_;
   bool timestamp_flag_;
   bool odom_deskew_flag_;
+  bool first_point_flag_;
+
+  Eigen::Affine3f trans_start_inverse_;
 
   Eigen::Vector3f odom_incre_;
   Eigen::Vector3f rpy_incre_;
@@ -76,8 +79,12 @@ private:
   bool Deskew();
   bool ImuDeskew();
   bool OdomDeskew();
+  pcl::PointXYZI DeskewPoint(pcl::PointXYZI *point, double time);
   void ImuCallback(const sensor_msgs::ImuConstPtr &imu_in);
   void OdomCallback(const nav_msgs::OdometryConstPtr &odom_in);
+
+  void FindRotation(double time, Eigen::Vector3d *delta_rot);
+  void FindPosition(double time, Eigen::Vector3d *delta_pose);
 
   void AllocateMemory();
   void ResetParameters();
@@ -118,7 +125,14 @@ void ImageProjection::ResetParameters() {
   pcl_front_point_cloud_in_->clear();
   rang_image_ =
       cv::Mat(N_SCAN, HORIZON_RESOLUTION, CV_32F, cv::Scalar::all(FLT_MAX));
+
   imu_pointer_current_ = 0;
+  first_point_flag_ = false;
+  odom_deskew_flag_ = false;
+  for (int i = 0; i < queue_length; i++) {
+    imu_t_[i] = 0;
+  }
+  imu_rot_ang_->setZero();
 }
 
 /**
@@ -289,6 +303,7 @@ bool ImageProjection::ImuDeskew() {
         imu_rot_ang_[imu_pointer_current_ - 1][1] + rot_ang[1] * time_diff;
     imu_rot_ang_[imu_pointer_current_][2] =
         imu_rot_ang_[imu_pointer_current_ - 1][2] + rot_ang[2] * time_diff;
+    imu_t_[imu_pointer_current_] = cur_imu_t;
 
     imu_pointer_current_++;
   }
@@ -410,6 +425,77 @@ void ImageProjection::PointCloudCallback(
   ProjectPointCloud();
 }
 
+/**
+ * 寻找激光点在其时刻的旋转量
+ */
+void ImageProjection::FindRotation(double time, Eigen::Vector3d *delta_rot) {
+  *delta_rot = Eigen::Vector3d::Zero();
+
+  int imu_point_front = 0;
+  // 查找当前时刻在imu_queue的time列表中的最相近的位置
+  while (imu_point_front < imu_pointer_current_) {
+    if (time < imu_t_[imu_point_front])
+      break;
+    imu_point_front++;
+  }
+
+  // ?: imu的数据点在point的左面（之前）,为什么不插值，对齐了吗？
+  if (time > imu_t_[imu_point_front] || imu_point_front == 0) {
+    *delta_rot = imu_rot_ang_[imu_point_front];
+  } else { // 线性插值
+    int imu_point_back = imu_point_front - 1;
+
+    double ratio_front = (time - imu_t_[imu_point_back]) /
+                         (imu_t_[imu_point_front] - imu_t_[imu_point_back]);
+    double ratio_back = (imu_t_[imu_point_front] - time) /
+                        (imu_t_[imu_point_front] - imu_t_[imu_point_back]);
+    *delta_rot = imu_rot_ang_[imu_point_front] * ratio_front +
+                 imu_rot_ang_[imu_point_back] * ratio_back;
+  }
+}
+
+/**
+ * 寻找激光点在其时刻的位移量
+ */
+void ImageProjection::FindPosition(double time,
+                                   Eigen::Vector3d *delta_position) {
+  *delta_position = Eigen::Vector3d::Zero();
+
+  // note: 如果激光雷达运动较忙，可以近似估为2帧之间，相对位移为0。
+  // note: 但是运动较快时，不可忽略近似.
+  if (!cloud_info_.odom_available || !odom_deskew_flag_)
+    return;
+
+  // 按照激光里程计起止时刻位姿变化的比例取值
+  double ratio =
+      time / (front_point_cloud_end_time_ - front_point_cloud_start_time_);
+  *delta_position = odom_incre_ * ratio;
+}
+
+pcl::PointXYZI ImageProjection::DeskewPoint(pcl::PointXYZI *point,
+                                            double time) {
+  if (!timestamp_flag_ || !cloud_info_.imu_available)
+    return *point;
+
+  double point_t = front_point_cloud_end_time_ + time;
+
+  Eigen::Vector3d delta_rot;
+  FindRotation(point_t, &delta_rot);
+
+  Eigen::Vector3d delta_position;
+  FindPosition(time, &delta_position);
+
+  if (first_point_flag_) {
+    first_point_flag_ = false;
+    trans_start_inverse_ =
+        (pcl::getTransformation(delta_position[0], delta_position[1],
+                                delta_position[2], delta_rot[0], delta_rot[1],
+                                delta_rot[2]))
+            .inverse();
+    
+  }
+}
+
 void ImageProjection::ProjectPointCloud() {
   int size = pcl_front_point_cloud_in_->points.size();
 
@@ -443,9 +529,11 @@ void ImageProjection::ProjectPointCloud() {
     }
     if (column_index < 0 || column_index >= HORIZON_RESOLUTION)
       continue;
+    // = FLT_MAX 的点没处理过，！=的点证明已经处理过了
     if (rang_image_.at<float>(row_index, column_index) != FLT_MAX)
       continue;
-      
+
+    this_point = DeskewPoint(&this_point, point.timestamp);
   }
 }
 
