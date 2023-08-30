@@ -34,8 +34,11 @@ class ImageProjection : public ParamServer {
 private:
   ros::Subscriber sub_pointcloud_;
   ros::Subscriber sub_imu_;
-
   ros::Subscriber sub_odom_;
+
+  ros::Publisher pub_extracted_point_cloud_;
+
+  ros::Publisher pub_point_cloud_info_;
 
 private:
   std::deque<sensor_msgs::PointCloud2> point_cloud_queue_;
@@ -44,6 +47,9 @@ private:
 
   sensor_msgs::PointCloud2 front_point_cloud_;
   pcl::PointCloud<VelodynePointXYZIRT>::Ptr pcl_front_point_cloud_in_;
+
+  pcl::PointCloud<pcl::PointXYZI>::Ptr full_point_cloud_;
+  pcl::PointCloud<pcl::PointXYZI>::Ptr extract_point_cloud_;
 
   // 自定义点云数据类型cloud_info.msg：去过畸变的点云，点云特征，初始估计位姿，关键帧，起始帧的index等
   lio_sam::cloud_info cloud_info_;
@@ -56,7 +62,7 @@ private:
   bool odom_deskew_flag_;
   bool first_point_flag_;
 
-  Eigen::Affine3f trans_start_inverse_;
+  Eigen::Affine3f trans_start_;
 
   Eigen::Vector3f odom_incre_;
   Eigen::Vector3f rpy_incre_;
@@ -91,6 +97,9 @@ private:
 
   void ProjectPointCloud();
 
+  void PointCloudExtraction();
+  void PublishDeskewPointCloud();
+
 public:
   ImageProjection();
   ~ImageProjection();
@@ -107,10 +116,18 @@ ImageProjection::ImageProjection() {
 
   sub_odom_ = nh.subscribe<nav_msgs::Odometry>(
       odom_topic + "_incremental", 2000, &ImageProjection::OdomCallback, this);
+
+  pub_extracted_point_cloud_ = nh.advertise<sensor_msgs::PointCloud2>(
+      "/lio_sam/deskew/cloud_deskewed", 1);
+  ros::Publisher pub_point_cloud_info_ =
+      nh.advertise<lio_sam::cloud_info>("/lio_sam/deskew/cloud_info", 1);
 }
 
 void ImageProjection::AllocateMemory() {
   pcl_front_point_cloud_in_.reset(new pcl::PointCloud<VelodynePointXYZIRT>());
+  full_point_cloud_.reset(new pcl::PointCloud<pcl::PointXYZI>());
+  full_point_cloud_->points.resize(N_SCAN * HORIZON_RESOLUTION);
+  extract_point_cloud_.reset(new pcl::PointCloud<pcl::PointXYZI>());
 
   cloud_info_.start_ring_index.assign(N_SCAN, 0);
   cloud_info_.end_ring_index.assign(N_SCAN, 0);
@@ -127,7 +144,7 @@ void ImageProjection::ResetParameters() {
       cv::Mat(N_SCAN, HORIZON_RESOLUTION, CV_32F, cv::Scalar::all(FLT_MAX));
 
   imu_pointer_current_ = 0;
-  first_point_flag_ = false;
+  first_point_flag_ = true;
   odom_deskew_flag_ = false;
   for (int i = 0; i < queue_length; i++) {
     imu_t_[i] = 0;
@@ -487,13 +504,29 @@ pcl::PointXYZI ImageProjection::DeskewPoint(pcl::PointXYZI *point,
 
   if (first_point_flag_) {
     first_point_flag_ = false;
-    trans_start_inverse_ =
-        (pcl::getTransformation(delta_position[0], delta_position[1],
-                                delta_position[2], delta_rot[0], delta_rot[1],
-                                delta_rot[2]))
-            .inverse();
-    
+    trans_start_ = (pcl::getTransformation(delta_position[0], delta_position[1],
+                                           delta_position[2], delta_rot[0],
+                                           delta_rot[1], delta_rot[2]));
   }
+
+  Eigen::Affine3f trans_end = pcl::getTransformation(
+      delta_position[0], delta_position[1], delta_position[2], delta_rot[0],
+      delta_rot[1], delta_rot[2]);
+  Eigen::Affine3f trans_start2end = trans_start_.inverse() * trans_end;
+  // note: 注意这个变换
+  pcl::PointXYZI new_point;
+  new_point.x = trans_start2end(0, 0) * point->x +
+                trans_start2end(0, 1) * point->y +
+                trans_start2end(0, 2) * point->z + trans_start2end(0, 3);
+  new_point.y = trans_start2end(1, 0) * point->x +
+                trans_start2end(1, 1) * point->y +
+                trans_start2end(1, 2) * point->z + trans_start2end(1, 3);
+  new_point.z = trans_start2end(2, 0) * point->x +
+                trans_start2end(2, 1) * point->y +
+                trans_start2end(2, 2) * point->z + trans_start2end(2, 3);
+  new_point.intensity = point->intensity;
+
+  return new_point;
 }
 
 void ImageProjection::ProjectPointCloud() {
@@ -533,8 +566,63 @@ void ImageProjection::ProjectPointCloud() {
     if (rang_image_.at<float>(row_index, column_index) != FLT_MAX)
       continue;
 
+    rang_image_.at<float>(row_index, column_index) = range;
+
     this_point = DeskewPoint(&this_point, point.timestamp);
+
+    int index = row_index * HORIZON_RESOLUTION + column_index;
+
+    full_point_cloud_->points[index] = this_point;
   }
 }
 
+/**
+ * 提取有效点云
+ */
+void ImageProjection::PointCloudExtraction() {
+  int cnt = 0;
+  for (int i = 0; i < N_SCAN; i++) {
+    // 记录每根扫描线起始第5个激光点在一维数组中的索引
+    cloud_info_.start_ring_index[i] = cnt - 1 + 5;
+    for (int j = 0; j < HORIZON_RESOLUTION; j++) {
+      if (rang_image_.at<float>(i, j) != FLT_MAX) {
+        cloud_info_.point_column_index[cnt] = j;
+        cloud_info_.point_range[cnt] = rang_image_.at<float>(i, j);
+
+        extract_point_cloud_->emplace_back(
+            full_point_cloud_->points[j + i * HORIZON_RESOLUTION]);
+        cnt++;
+      }
+    }
+    // 记录每根扫描线倒数第5个激光点在一维数组中的索引
+    cloud_info_.end_ring_index[i] = cnt - 1 - 5;
+  }
+}
+
+/**
+ * 发布当前帧校正后点云，有效点
+ */
+void ImageProjection::PublishDeskewPointCloud() {
+  cloud_info_.header = front_point_cloud_header_;
+
+  cloud_info_.cloud_deskewed =
+      PublishCloud(pub_extracted_point_cloud_, extract_point_cloud_,
+                   cloud_info_.header.stamp, lidar_frame);
+  pub_point_cloud_info_.publish(cloud_info_.cloud_deskewed);
+}
+
 ImageProjection::~ImageProjection() {}
+
+int main(int argc, char *argv[]) {
+  ros::init(argc, argv, "lio_sam");
+
+  ImageProjection image_projection;
+
+  ROS_INFO("\033[1,32m----> Image Projection Started. \033[0m");
+
+  ros::MultiThreadedSpinner spinner(3);
+
+  spinner.spin();
+
+  return 0;
+}
