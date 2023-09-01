@@ -60,9 +60,9 @@ CMakeFiles/lio_sam_generate_messages_eus: devel/share/roseus/ros/lio_sam/manifes
 
 devel/share/roseus/ros/lio_sam/msg/cloud_info.l: /opt/ros/noetic/lib/geneus/gen_eus.py
 devel/share/roseus/ros/lio_sam/msg/cloud_info.l: /home/llx/learning/LIO_SAM_ws/src/lio-sam/msg/cloud_info.msg
-devel/share/roseus/ros/lio_sam/msg/cloud_info.l: /opt/ros/noetic/share/std_msgs/msg/Header.msg
-devel/share/roseus/ros/lio_sam/msg/cloud_info.l: /opt/ros/noetic/share/sensor_msgs/msg/PointField.msg
 devel/share/roseus/ros/lio_sam/msg/cloud_info.l: /opt/ros/noetic/share/sensor_msgs/msg/PointCloud2.msg
+devel/share/roseus/ros/lio_sam/msg/cloud_info.l: /opt/ros/noetic/share/sensor_msgs/msg/PointField.msg
+devel/share/roseus/ros/lio_sam/msg/cloud_info.l: /opt/ros/noetic/share/std_msgs/msg/Header.msg
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/llx/learning/LIO_SAM_ws/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating EusLisp code from lio_sam/cloud_info.msg"
 	catkin_generated/env_cached.sh /usr/bin/python3 /opt/ros/noetic/share/geneus/cmake/../../../lib/geneus/gen_eus.py /home/llx/learning/LIO_SAM_ws/src/lio-sam/msg/cloud_info.msg -Ilio_sam:/home/llx/learning/LIO_SAM_ws/src/lio-sam/msg -Igeometry_msgs:/opt/ros/noetic/share/geometry_msgs/cmake/../msg -Istd_msgs:/opt/ros/noetic/share/std_msgs/cmake/../msg -Inav_msgs:/opt/ros/noetic/share/nav_msgs/cmake/../msg -Isensor_msgs:/opt/ros/noetic/share/sensor_msgs/cmake/../msg -Iactionlib_msgs:/opt/ros/noetic/share/actionlib_msgs/cmake/../msg -p lio_sam -o /home/llx/learning/LIO_SAM_ws/build/devel/share/roseus/ros/lio_sam/msg
 
