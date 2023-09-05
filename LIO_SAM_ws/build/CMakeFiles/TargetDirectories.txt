@@ -1,5 +1,6 @@
 /home/llx/learning/LIO_SAM_ws/build/CMakeFiles/install/strip.dir
 /home/llx/learning/LIO_SAM_ws/build/CMakeFiles/rebuild_cache.dir
+/home/llx/learning/LIO_SAM_ws/build/CMakeFiles/lio_sam_map_optmization_node.dir
 /home/llx/learning/LIO_SAM_ws/build/CMakeFiles/lio_sam_image_projection_node.dir
 /home/llx/learning/LIO_SAM_ws/build/CMakeFiles/lio_sam_genpy.dir
 /home/llx/learning/LIO_SAM_ws/build/CMakeFiles/lio_sam_feature_extraction_node.dir

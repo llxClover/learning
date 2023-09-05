@@ -34,6 +34,9 @@ find_package(catkin REQUIRED COMPONENTS
 include_directories(include ${catkin_INCLUDE_DIRS})
 link_directories(include ${catkin_LIBRARY_DIRS})
 
+
+find_package(OpenMP REQUIRED)
+
 # opencv
 find_package(OpenCV REQUIRED QUIET)
 include_directories(${OpenCV_INCLUDE_DIRS})
@@ -119,4 +122,16 @@ target_link_libraries(${PROJECT_NAME}_feature_extraction_node ${catkin_LIBRARIES
                       ${PCL_LIBRARIES}
                       ${OpenCV_LIBRARIES} 
                       ${GLOG_LIBRARIES} 
+                      glog::glog)
+
+add_executable(${PROJECT_NAME}_map_optmization_node src/map_optmization.cpp)
+target_compile_options(${PROJECT_NAME}_map_optmization_node PRIVATE ${OpenMP_CXX_FLAGS})
+add_dependencies(${PROJECT_NAME}_map_optmization_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+target_link_libraries(${PROJECT_NAME}_map_optmization_node ${catkin_LIBRARIES} 
+                      ${PCL_LIBRARIES}
+                      ${OpenCV_LIBRARIES} 
+                      ${GLOG_LIBRARIES} 
+                      ${OpenMP_CXX_FLAGS}
+                      gtsam
+                      Boost::timer
                       glog::glog)

@@ -285,7 +285,7 @@ public:
     // rotate gyr
     Eigen::Vector3d gyr(imu_in.angular_velocity.x, imu_in.angular_velocity.y,
                         imu_in.angular_velocity.z);
-    acc = ext_rot * gyr;
+    gyr = ext_rot * gyr;
     imu_out.angular_velocity.x = gyr.x();
     imu_out.angular_velocity.y = gyr.y();
     imu_out.angular_velocity.z = gyr.z();

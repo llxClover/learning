@@ -168,6 +168,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named lio_sam_map_optmization_node
+
+# Build rule for target.
+lio_sam_map_optmization_node: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 lio_sam_map_optmization_node
+.PHONY : lio_sam_map_optmization_node
+
+# fast build rule for target.
+lio_sam_map_optmization_node/fast:
+	$(MAKE) -f CMakeFiles/lio_sam_map_optmization_node.dir/build.make CMakeFiles/lio_sam_map_optmization_node.dir/build
+.PHONY : lio_sam_map_optmization_node/fast
+
+#=============================================================================
 # Target rules for targets named lio_sam_image_projection_node
 
 # Build rule for target.
@@ -1183,6 +1196,33 @@ src/image_projection.cpp.s:
 	$(MAKE) -f CMakeFiles/lio_sam_image_projection_node.dir/build.make CMakeFiles/lio_sam_image_projection_node.dir/src/image_projection.cpp.s
 .PHONY : src/image_projection.cpp.s
 
+src/map_optmization.o: src/map_optmization.cpp.o
+
+.PHONY : src/map_optmization.o
+
+# target to build an object file
+src/map_optmization.cpp.o:
+	$(MAKE) -f CMakeFiles/lio_sam_map_optmization_node.dir/build.make CMakeFiles/lio_sam_map_optmization_node.dir/src/map_optmization.cpp.o
+.PHONY : src/map_optmization.cpp.o
+
+src/map_optmization.i: src/map_optmization.cpp.i
+
+.PHONY : src/map_optmization.i
+
+# target to preprocess a source file
+src/map_optmization.cpp.i:
+	$(MAKE) -f CMakeFiles/lio_sam_map_optmization_node.dir/build.make CMakeFiles/lio_sam_map_optmization_node.dir/src/map_optmization.cpp.i
+.PHONY : src/map_optmization.cpp.i
+
+src/map_optmization.s: src/map_optmization.cpp.s
+
+.PHONY : src/map_optmization.s
+
+# target to generate assembly for a file
+src/map_optmization.cpp.s:
+	$(MAKE) -f CMakeFiles/lio_sam_map_optmization_node.dir/build.make CMakeFiles/lio_sam_map_optmization_node.dir/src/map_optmization.cpp.s
+.PHONY : src/map_optmization.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -1191,6 +1231,7 @@ help:
 	@echo "... depend"
 	@echo "... install/strip"
 	@echo "... rebuild_cache"
+	@echo "... lio_sam_map_optmization_node"
 	@echo "... lio_sam_image_projection_node"
 	@echo "... lio_sam_genpy"
 	@echo "... lio_sam_feature_extraction_node"
@@ -1276,6 +1317,9 @@ help:
 	@echo "... src/image_projection.o"
 	@echo "... src/image_projection.i"
 	@echo "... src/image_projection.s"
+	@echo "... src/map_optmization.o"
+	@echo "... src/map_optmization.i"
+	@echo "... src/map_optmization.s"
 .PHONY : help
 
 

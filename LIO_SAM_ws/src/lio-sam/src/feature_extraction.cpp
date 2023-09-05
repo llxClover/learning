@@ -1,16 +1,16 @@
 /* ==================================================================
  * Copyright (c) 2023 lilinxiang. All rights reserved.
  * @Author         :     lilinxiang
- * @Created Date   :     2023/xx/xx/
+ * @Created Date   :     2023/08/28/
  * @Email          :     lilinxiang@tsari.tsinghua.edu.cn
  *
  * @file           :     feature_extraction.cpp
  * @brief          :     一步一步实现，并验证LIO-SAM的featureExtraction.cpp
  * ===================================================================*/
+#include <glog/logging.h>
+
 #include "lio_sam/cloud_info.h"
 #include "utility.h"
-
-#include <glog/logging.h>
 
 struct Smoothness {
   size_t index;
@@ -24,7 +24,7 @@ struct by_value {
 };
 
 class FeatureExtraction : public ParamServer {
-private:
+ private:
   ros::Subscriber sub_point_cloud_;
   ros::Publisher pub_corner_points_;
   ros::Publisher pub_surface_points_;
@@ -44,7 +44,7 @@ private:
 
   pcl::VoxelGrid<pcl::PointXYZI> down_size_filter_;
 
-private:
+ private:
   void InitializationValue();
 
   void PointCloudCallback(const lio_sam::cloud_infoConstPtr &msg_in);
@@ -59,7 +59,7 @@ private:
 
   void PublishFeatureClould();
 
-public:
+ public:
   FeatureExtraction(/* args */);
   ~FeatureExtraction();
 };
@@ -69,9 +69,11 @@ FeatureExtraction::FeatureExtraction() {
       "lio_sam/deskew/cloud_info", 1, &FeatureExtraction::PointCloudCallback,
       this);
   pub_corner_points_ =
-      nh.advertise<lio_sam::cloud_info>("lio_sam/feature/cloud_corner", 1);
-  pub_surface_points_ =
-      nh.advertise<lio_sam::cloud_info>("lio_sam/feature/cloud_surface", 1);
+      nh.advertise<sensor_msgs::PointCloud2>("lio_sam/feature/cloud_corner", 1);
+  pub_surface_points_ = nh.advertise<sensor_msgs::PointCloud2>(
+      "lio_sam/feature/cloud_surface", 1);
+  pub_point_cloud_info_ =
+      nh.advertise<lio_sam::cloud_info>("lio_sam/feature/cloud_info", 1);
 }
 
 FeatureExtraction::~FeatureExtraction() {}
@@ -101,6 +103,10 @@ void FeatureExtraction::PointCloudCallback(
   CalculateSmoothness();
 
   MarkOccludePoints();
+
+  ExtractFeatures();
+
+  PublishFeatureClould();
 }
 
 /**
@@ -108,7 +114,12 @@ void FeatureExtraction::PointCloudCallback(
  */
 void FeatureExtraction::CalculateSmoothness() {
   int size = extracted_point_cloud_->points.size();
-  // ?: 不区分ring属性吗? 上下2个环交界处咋处理？
+  // note: 可以通过检查HEIGHT的值来判断点云属于哪种类型。
+  // note: 相比于无序点云，有序点云的优势在于，可以更高效地处理目标点
+  // note: 与邻域之间的关系，可以实现加速计算并降低PCL中某些算法的成本
+  // ?: 不区分ring属性吗? 上下2个环交界处咋处理？这种计算很粗糙。
+  // todo:将image_projection的pcl点云存放为有序格式，只在同一行(5，len-5)计算曲率
+  // 一般情况下是个360°的圆环，ring-0的1799，在ring-1的1800上面，万一很远呢？
   for (int i = 5; i < size - 5; i++) {
     double diff_range =
         cloud_info_.point_range[i - 5] + cloud_info_.point_range[i - 4] +
@@ -118,7 +129,7 @@ void FeatureExtraction::CalculateSmoothness() {
         cloud_info_.point_range[i + 4] + cloud_info_.point_range[i + 5] -
         10 * cloud_info_.point_range[i];
 
-    cloud_curvature_[i] = diff_range * diff_range; // 近似表达，加速计算
+    cloud_curvature_[i] = diff_range * diff_range;  // 近似表达，加速计算
     cloud_neighbor_picked_[i] = 0;
     cloud_smoothness_[i].value = cloud_curvature_[i];
     cloud_smoothness_[i].index = i;
@@ -126,6 +137,9 @@ void FeatureExtraction::CalculateSmoothness() {
   }
 }
 
+/**
+ * 处理掉2种异常干扰特征提取的点：平行点和遮挡点
+ */
 void FeatureExtraction::MarkOccludePoints() {
   int size = extracted_point_cloud_->points.size();
 
@@ -135,8 +149,8 @@ void FeatureExtraction::MarkOccludePoints() {
     int diff_column =
         std::abs(static_cast<int>(cloud_info_.point_column_index[i] -
                                   cloud_info_.point_column_index[i + 1]));
-    // ?:为什么是这个顺序？
     // note: case1 遮挡（断层）
+    // 扫描方式是顺时针还是逆时针，分2种情况
     if (diff_column < 10) {
       if (depth_1 - depth_2 > 0.3) {
         cloud_neighbor_picked_[i] = 1;
@@ -159,8 +173,7 @@ void FeatureExtraction::MarkOccludePoints() {
         cloud_info_.point_range[i] - cloud_info_.point_range[i - 1]));
     double diff_range_2 = std::abs(static_cast<double>(
         cloud_info_.point_range[i] - cloud_info_.point_range[i + 1]));
-    // ?: 为什么这样处理？
-    // ?: 平行？
+    // note: case2 激光线与环境平行 判断该点前后2个点的距离差距是否过大
     if (diff_range_1 > 0.02 * cloud_info_.point_range[i] &&
         diff_range_2 > 0.02 * cloud_info_.point_range[i]) {
       cloud_neighbor_picked_[i] = 1;
@@ -196,8 +209,7 @@ void FeatureExtraction::ExtractFeatures() {
                        cloud_info_.end_ring_index[i] * (j + 1)) /
                           6.0 -
                       1;
-      if (start_point >= end_point)
-        continue;
+      if (start_point >= end_point) continue;
 
       // std::sort(cloud_smoothness_.begin() + start_point,
       //           cloud_smoothness_.begin() + end_point, by_value());
@@ -240,8 +252,7 @@ void FeatureExtraction::ExtractFeatures() {
                 cloud_info_.point_column_index[index + l - 1]));
             // 有时候一条扫描线上激光点并不是连续的（中间有可能存在空洞啥的，激光不返回）
             // 此时就算相邻的2个点，也相差很远
-            if (column_diff > 10)
-              break;
+            if (column_diff > 10) break;
             // 即 标记为 处理过(实际就没处理)
             cloud_neighbor_picked_[index + l] = 1;
           }
@@ -251,8 +262,7 @@ void FeatureExtraction::ExtractFeatures() {
                 cloud_info_.point_column_index[index + l] -
                 cloud_info_.point_column_index[index + l - 1]));
 
-            if (column_diff > 10)
-              break;
+            if (column_diff > 10) break;
 
             cloud_neighbor_picked_[index + l] = 1;
           }
@@ -268,7 +278,7 @@ void FeatureExtraction::ExtractFeatures() {
           // 平面特征点label = -1
           cloud_label_[index] = -1;
           // note: 与角特征点不同，这里没有直接存放
-          // note: label=1 角特征点，label=-1 平面特征点, 
+          // note: label=1 角特征点，label=-1 平面特征点,
           // note: label=0 普通没有处理的点(除去那些特征点前后各5个)
           // 标记为已处理
           cloud_neighbor_picked_[index] = 1;
@@ -279,8 +289,7 @@ void FeatureExtraction::ExtractFeatures() {
                 cloud_info_.point_column_index[index + l] -
                 cloud_info_.point_column_index[index + l - 1]));
 
-            if (column_diff > 10)
-              break;
+            if (column_diff > 10) break;
 
             cloud_neighbor_picked_[index + l] = 1;
           }
@@ -290,8 +299,7 @@ void FeatureExtraction::ExtractFeatures() {
                 cloud_info_.point_column_index[index + l] -
                 cloud_info_.point_column_index[index + l - 1]));
 
-            if (column_diff > 10)
-              break;
+            if (column_diff > 10) break;
 
             cloud_neighbor_picked_[index + l] = 1;
           }
@@ -299,8 +307,8 @@ void FeatureExtraction::ExtractFeatures() {
       }
 
       for (int k = start_point; k <= end_point; k++) {
-          // note: label=0 普通没有处理的点(除去那些特征点前后各5个) 
-          // note: label=-1 平面特征点  全部划分为 非角特征点大类
+        // note: label=0 普通没有处理的点(除去那些特征点前后各5个)
+        // note: label=-1 平面特征点  全部划分为 非角特征点大类
         if (cloud_label_[k] <= 0) {
           surface_cloud_scan->emplace_back(extracted_point_cloud_->points[k]);
         }
@@ -312,7 +320,6 @@ void FeatureExtraction::ExtractFeatures() {
     down_size_filter_.filter(*surface_cloud_scan_downsampping);
     // 角特征点是一个一个入栈的，平面特征点要 N_SCAN 相加
     *surface_point_cloud_ += *surface_cloud_scan_downsampping;
-
   }
 }
 
@@ -324,7 +331,6 @@ void FeatureExtraction::FreeCloudInfoMemory() {
 }
 
 void FeatureExtraction::PublishFeatureClould() {
-
   FreeCloudInfoMemory();
 
   cloud_info_.cloud_corner =
@@ -340,10 +346,10 @@ void FeatureExtraction::PublishFeatureClould() {
 
 int main(int argc, char *argv[]) {
   google::InitGoogleLogging(argv[0]);
-  FLAGS_logtostderr = false; //设置日志消息是否转到标准输出而不是日志文件
-  FLAGS_alsologtostderr = true; //设置日志消息除了日志文件之外是否去标准输出
-  FLAGS_log_prefix = true; //设置日志前缀是否应该添加到每行输出
-  FLAGS_log_dir = "../log"; //预创建好
+  FLAGS_logtostderr = false;  // 设置日志消息是否转到标准输出而不是日志文件
+  FLAGS_alsologtostderr = true;  // 设置日志消息除了日志文件之外是否去标准输出
+  FLAGS_log_prefix = true;  // 设置日志前缀是否应该添加到每行输出
+  FLAGS_log_dir = "../log";  // 预创建好
 
   ros::init(argc, argv, "lio_sam");
 

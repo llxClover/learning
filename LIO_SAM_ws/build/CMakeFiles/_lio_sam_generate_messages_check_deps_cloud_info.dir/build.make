@@ -54,7 +54,7 @@ CMAKE_BINARY_DIR = /home/llx/learning/LIO_SAM_ws/build
 include CMakeFiles/_lio_sam_generate_messages_check_deps_cloud_info.dir/progress.make
 
 CMakeFiles/_lio_sam_generate_messages_check_deps_cloud_info:
-	catkin_generated/env_cached.sh /usr/bin/python3 /opt/ros/noetic/share/genmsg/cmake/../../../lib/genmsg/genmsg_check_deps.py lio_sam /home/llx/learning/LIO_SAM_ws/src/lio-sam/msg/cloud_info.msg sensor_msgs/PointCloud2:sensor_msgs/PointField:std_msgs/Header
+	catkin_generated/env_cached.sh /usr/bin/python3 /opt/ros/noetic/share/genmsg/cmake/../../../lib/genmsg/genmsg_check_deps.py lio_sam /home/llx/learning/LIO_SAM_ws/src/lio-sam/msg/cloud_info.msg std_msgs/Header:sensor_msgs/PointCloud2:sensor_msgs/PointField
 
 _lio_sam_generate_messages_check_deps_cloud_info: CMakeFiles/_lio_sam_generate_messages_check_deps_cloud_info
 _lio_sam_generate_messages_check_deps_cloud_info: CMakeFiles/_lio_sam_generate_messages_check_deps_cloud_info.dir/build.make

@@ -38,7 +38,7 @@ lio_sam:
   imu_gravity: 9.80511
   imu_rpy_weight: 0.01
 
-  # Extrinsics: T_lb (lidar -> imu)
+  # Extrinsics: T_lb (imu 到 lidar的坐标变换)
   ext_trans: [0.0, 0.0, 0.0]
   ext_rot: [-1, 0, 0,
              0, 1, 0,

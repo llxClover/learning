@@ -15,14 +15,14 @@
  * 定义Velodyne的点云格式
  */
 struct VelodynePointXYZIRT {
-  PCL_ADD_POINT4D; // 宏定义（pcl库的）里面分别有 x、y、z 还有一个对齐变量
+  PCL_ADD_POINT4D;  // 宏定义（pcl库的）里面分别有 x、y、z 还有一个对齐变量
   PCL_ADD_INTENSITY;
   int ring;
-  double timestamp; // 记录相对于当前帧第一个激光点的时差，第一个点time=0
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW //确保new操作符内存对齐操作
-} EIGEN_ALIGN16; // 内存16字节对齐，EIGEN SSE优化要求
+  double timestamp;  // 记录相对于当前帧第一个激光点的时差，第一个点time=0
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW  // 确保new操作符内存对齐操作
+} EIGEN_ALIGN16;  // 内存16字节对齐，EIGEN SSE优化要求
 
-//注册点类型宏  固定步骤 :先是上面定义的结构体的名称,后面是各变量
+// 注册点类型宏  固定步骤 :先是上面定义的结构体的名称,后面是各变量
 POINT_CLOUD_REGISTER_POINT_STRUCT(
     VelodynePointXYZIRT,
     (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(
@@ -31,7 +31,7 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(
 constexpr int queue_length = 2000;
 
 class ImageProjection : public ParamServer {
-private:
+ private:
   ros::Subscriber sub_pointcloud_;
   ros::Subscriber sub_imu_;
   ros::Subscriber sub_odom_;
@@ -40,7 +40,7 @@ private:
 
   ros::Publisher pub_point_cloud_info_;
 
-private:
+ private:
   std::deque<sensor_msgs::PointCloud2> point_cloud_queue_;
   std::deque<sensor_msgs::Imu> imu_queue_;
   std::deque<nav_msgs::Odometry> odom_queue_;
@@ -61,6 +61,7 @@ private:
   bool timestamp_flag_;
   bool odom_deskew_flag_;
   bool first_point_flag_;
+  int deskew_flag_;
 
   Eigen::Affine3f trans_start_;
 
@@ -78,9 +79,9 @@ private:
   std::mutex point_cloud_lock_;
   std::mutex odom_lock_;
 
-private:
-  void
-  PointCloudCallback(const sensor_msgs::PointCloud2ConstPtr &pointcloud_in);
+ private:
+  void PointCloudCallback(
+      const sensor_msgs::PointCloud2ConstPtr &pointcloud_in);
   bool CachePointCloud(const sensor_msgs::PointCloud2ConstPtr &pointcloud_in);
   bool Deskew();
   bool ImuDeskew();
@@ -100,7 +101,7 @@ private:
   void PointCloudExtraction();
   void PublishDeskewPointCloud();
 
-public:
+ public:
   ImageProjection();
   ~ImageProjection();
 };
@@ -110,6 +111,7 @@ ImageProjection::ImageProjection() {
       point_cloud_topic, 10, &ImageProjection::PointCloudCallback, this);
   ring_flag_ = false;
   timestamp_flag_ = false;
+  deskew_flag_ = 0;
 
   sub_imu_ = nh.subscribe<sensor_msgs::Imu>(
       imu_topic, 100, &ImageProjection::ImuCallback, this);
@@ -119,7 +121,7 @@ ImageProjection::ImageProjection() {
 
   pub_extracted_point_cloud_ = nh.advertise<sensor_msgs::PointCloud2>(
       "/lio_sam/deskew/cloud_deskewed", 1);
-  ros::Publisher pub_point_cloud_info_ =
+  pub_point_cloud_info_ =
       nh.advertise<lio_sam::cloud_info>("/lio_sam/deskew/cloud_info", 1);
 }
 
@@ -177,8 +179,7 @@ void ImageProjection::OdomCallback(const nav_msgs::OdometryConstPtr &odom_in) {
 bool ImageProjection::CachePointCloud(
     const sensor_msgs::PointCloud2ConstPtr &ros_point_cloud_in) {
   // 将收到的一帧激光点云存起来
-  // ?:
-  // 这个锁是我自己加的，有问题的话，删除，目前只是看看为什么imu/odom加锁，而lidar不？
+  // ?:这个锁是我自己加的，有问题的话，删除，目前只是看看为什么imu/odom加锁，而lidar不？
   std::lock_guard<std::mutex> lock_point_cloud_(point_cloud_lock_);
   point_cloud_queue_.emplace_back(*ros_point_cloud_in);
   // 点云数据太少，不行啊！
@@ -196,6 +197,7 @@ bool ImageProjection::CachePointCloud(
   }
 
   front_point_cloud_header_ = front_point_cloud_.header;
+  // 一帧点云记录的header的时间，是该帧的开始时间
   front_point_cloud_start_time_ = front_point_cloud_.header.stamp.toSec();
   front_point_cloud_end_time_ = front_point_cloud_start_time_ +
                                 pcl_front_point_cloud_in_->end()->timestamp;
@@ -242,7 +244,6 @@ bool ImageProjection::CachePointCloud(
  * 2. odom辅助
  */
 bool ImageProjection::Deskew() {
-
   // 保证imu数据包括住整个lidar点云帧
   if (imu_queue_.empty() ||
       imu_queue_.front().header.stamp.toSec() > front_point_cloud_start_time_ ||
@@ -296,8 +297,7 @@ bool ImageProjection::ImuDeskew() {
                             &cloud_info_.imu_yaw_init);
     }
     // 0.01 对应100Hz,imu一般为200-500Hz，也就是说至少2个imu点在lidar最后面
-    if (cur_imu_t > front_point_cloud_end_time_ + 0.01)
-      break;
+    if (cur_imu_t > front_point_cloud_end_time_ + 0.01) break;
 
     // 第一帧imu旋转角初始化
     if (imu_pointer_current_ == 0) {
@@ -383,9 +383,9 @@ bool ImageProjection::OdomDeskew() {
   cloud_info_.init_guess_x = start_odom.pose.pose.position.x;
   cloud_info_.init_guess_y = start_odom.pose.pose.position.y;
   cloud_info_.init_guess_z = start_odom.pose.pose.position.z;
-  cloud_info_.imu_roll_init = r;
-  cloud_info_.imu_pitch_init = p;
-  cloud_info_.imu_yaw_init = y;
+  cloud_info_.init_guess_roll = r;
+  cloud_info_.init_guess_pitch = p;
+  cloud_info_.init_guess_yaw = y;
 
   cloud_info_.odom_available = true;
 
@@ -402,7 +402,8 @@ bool ImageProjection::OdomDeskew() {
       break;
     }
   }
-  // ?:为什么
+  // note:为什么前后odom的协方差判断一下这个段odom的好坏
+  // 协方差的意义： 它们一致的分散程度有多大
   // 如果起止时刻对应imu里程计的方差不等，返回
   if (static_cast<int>(std::round(start_odom.pose.covariance[0])) !=
       static_cast<int>(std::round(end_odom.pose.covariance[0])))
@@ -418,7 +419,7 @@ bool ImageProjection::OdomDeskew() {
   Eigen::Affine3f trans_end = pcl::getTransformation(
       end_odom.pose.pose.position.x, end_odom.pose.pose.position.y,
       end_odom.pose.pose.position.z, r, p, y);
-  // ?:思考一下这里的变换
+  // ?:思考一下这里的imu变换,这个T是完整的1帧激光的运动吗
   Eigen::Affine3f trans_start_end = trans_start.inverse() * trans_end;
 
   pcl::getTranslationAndEulerAngles(
@@ -430,16 +431,23 @@ bool ImageProjection::OdomDeskew() {
 
 void ImageProjection::PointCloudCallback(
     const sensor_msgs::PointCloud2ConstPtr &pointcloud_in) {
-
   if (!ImageProjection::CachePointCloud(pointcloud_in)) {
     ROS_WARN("===> 点云格式存在问题，无法加入队列 <===");
     return;
   }
+
   if (!ImageProjection::Deskew()) {
     ROS_WARN("===> 原始点云未进行运动畸变去除 <===");
     return;
   }
+
   ProjectPointCloud();
+
+  PointCloudExtraction();
+
+  PublishDeskewPointCloud();
+
+  ResetParameters();
 }
 
 /**
@@ -451,15 +459,15 @@ void ImageProjection::FindRotation(double time, Eigen::Vector3d *delta_rot) {
   int imu_point_front = 0;
   // 查找当前时刻在imu_queue的time列表中的最相近的位置
   while (imu_point_front < imu_pointer_current_) {
-    if (time < imu_t_[imu_point_front])
-      break;
+    if (time < imu_t_[imu_point_front]) break;
     imu_point_front++;
   }
 
   // ?: imu的数据点在point的左面（之前）,为什么不插值，对齐了吗？
+  // answer:上面有while{},到下面证明是在没有合适的imu数据，凑合一下吧
   if (time > imu_t_[imu_point_front] || imu_point_front == 0) {
     *delta_rot = imu_rot_ang_[imu_point_front];
-  } else { // 线性插值
+  } else {  // 线性插值
     int imu_point_back = imu_point_front - 1;
 
     double ratio_front = (time - imu_t_[imu_point_back]) /
@@ -478,10 +486,9 @@ void ImageProjection::FindPosition(double time,
                                    Eigen::Vector3d *delta_position) {
   *delta_position = Eigen::Vector3d::Zero();
 
-  // note: 如果激光雷达运动较忙，可以近似估为2帧之间，相对位移为0。
+  // note: 如果激光雷达运动较慢，可以近似估为2帧之间，相对位移为0。
   // note: 但是运动较快时，不可忽略近似.
-  if (!cloud_info_.odom_available || !odom_deskew_flag_)
-    return;
+  if (!cloud_info_.odom_available || !odom_deskew_flag_) return;
 
   // 按照激光里程计起止时刻位姿变化的比例取值
   double ratio =
@@ -491,10 +498,9 @@ void ImageProjection::FindPosition(double time,
 
 pcl::PointXYZI ImageProjection::DeskewPoint(pcl::PointXYZI *point,
                                             double time) {
-  if (!timestamp_flag_ || !cloud_info_.imu_available)
-    return *point;
+  if (!timestamp_flag_ || !cloud_info_.imu_available) return *point;
 
-  double point_t = front_point_cloud_end_time_ + time;
+  double point_t = front_point_cloud_start_time_ + time;
 
   Eigen::Vector3d delta_rot;
   FindRotation(point_t, &delta_rot);
@@ -540,18 +546,17 @@ void ImageProjection::ProjectPointCloud() {
     this_point.intensity = point.intensity;
     double range = PointDistance(this_point);
 
-    if (range < lidar_min_range || range > lidar_max_range)
-      continue;
+    if (range < lidar_min_range || range > lidar_max_range) continue;
 
     int row_index = point.ring;
-    if (row_index < 0 || row_index > N_SCAN - 1)
-      continue;
-    if (row_index % downsample_rate != 0)
-      continue;
+    if (row_index < 0 || row_index > N_SCAN - 1) continue;
+    if (row_index % downsample_rate != 0) continue;
 
     int column_index = -1;
     if (sensor == SensorType::VELODYNE || sensor == SensorType::RSLIDAR) {
-      // ?: atan = x/y
+      // ?: 为什么是atan = x/y，而不是atan = y/x
+      // Answer:column_index = -1 * std::round((horizon_angle - 90.0) 就是
+      // atan=y/x， 0°是0.5*HORIZON_RESOLUTION
       double horizon_angle =
           std::atan2(this_point.x, this_point.y) * 180.0 / M_PI;
       static double angle_res_x = 360.0 / HORIZON_RESOLUTION;
@@ -560,14 +565,12 @@ void ImageProjection::ProjectPointCloud() {
       if (column_index >= HORIZON_RESOLUTION)
         column_index -= HORIZON_RESOLUTION;
     }
-    if (column_index < 0 || column_index >= HORIZON_RESOLUTION)
-      continue;
+    if (column_index < 0 || column_index >= HORIZON_RESOLUTION) continue;
     // = FLT_MAX 的点没处理过，！=的点证明已经处理过了
-    if (rang_image_.at<float>(row_index, column_index) != FLT_MAX)
-      continue;
+    if (rang_image_.at<float>(row_index, column_index) != FLT_MAX) continue;
 
     rang_image_.at<float>(row_index, column_index) = range;
-
+    // note:激光运动畸变校正
     this_point = DeskewPoint(&this_point, point.timestamp);
 
     int index = row_index * HORIZON_RESOLUTION + column_index;
