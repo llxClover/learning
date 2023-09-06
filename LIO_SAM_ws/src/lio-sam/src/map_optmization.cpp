@@ -56,6 +56,11 @@ class MapOptmization : public ParamServer {
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_corner_;
   pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud_surface_;
 
+  float transform_to_be_mapped_[6];
+
+  Eigen::Affine3f incremental_odom_affine_front_;
+  Eigen::Affine3f incremental_odom_affine_back_;
+
   std::mutex mutex_;
 
  private:
@@ -89,6 +94,10 @@ MapOptmization::MapOptmization() {
   pointcloud_in_.reset(new lio_sam::cloud_info());
   pointcloud_corner_.reset(new pcl::PointCloud<pcl::PointXYZI>());
   pointcloud_surface_.reset(new pcl::PointCloud<pcl::PointXYZI>());
+  // note: 数组初始化
+  // 方法1：transform_to_be_mapped_[6]={0};
+  // 方法2：
+  std::memset(transform_to_be_mapped_, 0, sizeof(transform_to_be_mapped_) * 6);
 }
 
 MapOptmization::~MapOptmization() {}
@@ -108,6 +117,8 @@ void MapOptmization::PointcloudCallback(
 
   std::lock_guard<std::mutex> lock(mutex_);
 
+  // ?:难道这就是传说中的 mapping执行频率控制？
+  // 当两帧之间的delta_t > mapping周期时,说明该进行建图了
   static double time_last_processing = -1;
   if (pointcloud_time_cur_ - time_last_processing >= mapping_process_interval) {
     time_last_processing = pointcloud_time_cur_;
@@ -130,18 +141,24 @@ void MapOptmization::PointcloudCallback(
   }
 }
 
-void MapOptmization::UpdateInitialGuess(){}
+void MapOptmization::UpdateInitialGuess() {
+  incremental_odom_affine_front_ = [](float* transform_in) -> Eigen::Affine3f {
+    return pcl::getTransformation(transform_in[3], transform_in[4],
+                                  transform_in[5], transform_in[0],
+                                  transform_in[1], transform_in[2]);
+  }(transform_to_be_mapped_);
+}
 
-void MapOptmization::ExtractSurroundingKeyFrames(){}
+void MapOptmization::ExtractSurroundingKeyFrames() {}
 
-void MapOptmization::DownsampleCurrentScan(){}
+void MapOptmization::DownsampleCurrentScan() {}
 
-void MapOptmization::Scan2MapOptimization(){}
+void MapOptmization::Scan2MapOptimization() {}
 
-void MapOptmization::SaveKeyFrameAndFactor(){}
+void MapOptmization::SaveKeyFrameAndFactor() {}
 
-void MapOptmization::CorrectPoses(){}
+void MapOptmization::CorrectPoses() {}
 
-void MapOptmization::PublishOdometry(){}
+void MapOptmization::PublishOdometry() {}
 
-void MapOptmization::PublishFrames(){}
+void MapOptmization::PublishFrames() {}
