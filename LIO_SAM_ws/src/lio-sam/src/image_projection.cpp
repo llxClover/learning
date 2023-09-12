@@ -510,9 +510,9 @@ pcl::PointXYZI ImageProjection::DeskewPoint(pcl::PointXYZI *point,
 
   if (first_point_flag_) {
     first_point_flag_ = false;
-    trans_start_ = (pcl::getTransformation(delta_position[0], delta_position[1],
-                                           delta_position[2], delta_rot[0],
-                                           delta_rot[1], delta_rot[2]));
+    trans_start_ = pcl::getTransformation(delta_position[0], delta_position[1],
+                                          delta_position[2], delta_rot[0],
+                                          delta_rot[1], delta_rot[2]);
   }
 
   Eigen::Affine3f trans_end = pcl::getTransformation(
