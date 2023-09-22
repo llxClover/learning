@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/publisher.dir/src/publisher.cpp.o  -o publisher  -lzmq 

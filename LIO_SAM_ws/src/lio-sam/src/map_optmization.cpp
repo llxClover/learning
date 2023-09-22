@@ -147,6 +147,9 @@ class MapOptmization : public ParamServer {
 
   void UpdatePointAssociateToMap();
 
+  void PointAssociateToMap(pcl::PointXYZI const *const pi,
+                           pcl::PointXYZI *const po);
+
  public:
   MapOptmization();
   ~MapOptmization();
@@ -531,7 +534,114 @@ void MapOptmization::PublishOdometry() {}
 void MapOptmization::PublishFrames() {}
 
 // 角特征点优化
-void MapOptmization::CornerOptimization() { UpdatePointAssociateToMap(); }
+void MapOptmization::CornerOptimization() {
+  UpdatePointAssociateToMap();
+
+  // note: 多线程编程 openmp
+  // note: openmp是由一系列#paragma指令组成，这些指令控制如何多线程的执行程序.
+  // note: 所有的omp指令都是以"#pragma omp“开头，换行符结束
+  // # pragma omp paraller for num_threads(XXX) 多线程以指定核数运行for循环
+#pragma omp paraller for num_threads(core_num)
+  for (int i = 0; i < laser_cloud_corner_last_DS_num_; i++) {
+    pcl::PointXYZI point_ori, point_sel, coeff;
+    std::vector<int> point_search_index;
+    std::vector<float> point_search_sq_dis;
+    // 角点 (lidar frame)
+    point_ori = laser_cloud_corner_last_DS_->points[i];
+    // 转换到 map 坐标系下
+    PointAssociateToMap(&point_ori, &point_sel);
+    // 在local corner map中找相邻最近的5个角点
+    kdtree_corner_from_map_->nearestKSearch(point_sel, 5, point_search_index,
+                                            point_search_sq_dis);
+
+    cv::Mat matA1(3, 3, CV_32F, cv::Scalar::all(0));
+    cv::Mat matD1(1, 3, CV_32F, cv::Scalar::all(0));
+    cv::Mat matV1(3, 3, CV_32F, cv::Scalar::all(0));
+
+    // 要求距离都小于1m
+    if (point_search_sq_dis[4] < 1.0) {
+      // 计算中心点的坐标
+      float cx = 0, cy = 0, cz = 0;
+      for (int j = 0; j < 5; j++) {
+        cx += laser_cloud_corner_from_map_DS_->points[point_search_index[j]].x;
+        cy += laser_cloud_corner_from_map_DS_->points[point_search_index[j]].y;
+        cz += laser_cloud_corner_from_map_DS_->points[point_search_index[j]].z;
+      }
+      cx /= 5.0;
+      cy /= 5.0;
+      cz /= 5.0;
+
+      // 计算协方差
+      float a11 = 0, a12 = 0, a13 = 0, a22 = 0, a23 = 0, a33 = 0;
+      for (int j = 0; j < 5; j++) {
+        float ax =
+            laser_cloud_corner_from_map_DS_->points[point_search_index[j]].x -
+            cx;
+        float ay =
+            laser_cloud_corner_from_map_DS_->points[point_search_index[j]].y -
+            cy;
+        float az =
+            laser_cloud_corner_from_map_DS_->points[point_search_index[j]].z -
+            cz;
+
+        a11 += ax * ax;
+        a12 += ax * ay;
+        a13 += ax * az;
+        a22 += ay * ay;
+        a23 += ay * az;
+        a33 += az * az;
+      }
+      a11 /= 5.0;
+      a12 /= 5.0;
+      a13 /= 5.0;
+      a22 /= 5.0;
+      a23 /= 5.0;
+      a33 /= 5.0;
+
+      // 构建协方差矩阵
+      matA1.at<float>(0, 0) = a11;
+      matA1.at<float>(0, 1) = a12;
+      matA1.at<float>(0, 2) = a13;
+      matA1.at<float>(1, 0) = a12;
+      matA1.at<float>(1, 1) = a22;
+      matA1.at<float>(1, 2) = a23;
+      matA1.at<float>(2, 0) = a13;
+      matA1.at<float>(2, 1) = a23;
+      matA1.at<float>(2, 2) = a33;
+
+      // 特征值分解
+      cv::eigen(matA1, matD1, matV1);
+
+      // 如果最大特征值比次特征值大得多（3倍）, 称之为 1大2小， 角特征点成立
+      if (matD1.at<float>(0, 0) > 3 * matD1.at<float>(0, 1)) {
+        float x0 = point_sel.x;
+        float y0 = point_sel.y;
+        float z0 = point_sel.z;
+
+        // 计算点到直线的距离，先确定直线（直线的方向就是最大的特征值对应的特征向量的方向）
+        // 5个最近的局部地图中角点的几何中心点，沿着特征向量（直线方向）方向，前后各取一个点
+        // ?: 这样选的3个点，难道不是在一条直线上吗？
+        float x1 = cx + 0.1 * matV1.at<float>(0, 0);
+        float y1 = cy + 0.1 * matV1.at<float>(0, 1);
+        float z1 = cz + 0.1 * matV1.at<float>(0, 2);
+
+        float x2 = cx - 0.1 * matV1.at<float>(0, 0);
+        float y2 = cy - 0.1 * matV1.at<float>(0, 1);
+        float z2 = cz - 0.1 * matV1.at<float>(0, 2);
+
+        // 计算三个点构成的 三角形的面积 =  2*|axb|=2*|a|*|b|*sin(theta)
+        // ?:怎么计算？
+        float area_012 =
+            sqrt(((x0 - x1) * (y0 - y2) - (x0 - x2) * (y0 - y1)) *
+                     ((x0 - x1) * (y0 - y2) - (x0 - x2) * (y0 - y1)) +
+                 ((x0 - x1) * (z0 - z2) - (x0 - x2) * (z0 - z1)) *
+                     ((x0 - x1) * (z0 - z2) - (x0 - x2) * (z0 - z1)) +
+                 ((y0 - y1) * (z0 - z2) - (y0 - y2) * (z0 - z1)) *
+                     ((y0 - y1) * (z0 - z2) - (y0 - y2) * (z0 - z1)));
+      }
+    }
+  }
+}
 
 // 平面特征点优化
 void MapOptmization::SurfaceOptimization() {}
@@ -549,13 +659,21 @@ void MapOptmization::UpdatePointAssociateToMap() {
                                   transform_in[5], transform_in[0],
                                   transform_in[1], transform_in[2]);
   }(transform_to_be_mapped_);
+}
 
-// note: 多线程编程 openmp
-// note: openmp是由一系列#paragma指令组成，这些指令控制如何多线程的执行程序.
-// note: 所有的omp指令都是以"#pragma omp“开头，换行符结束
-// # pragma omp paraller for num_threads(XXX) 多线程以指定核数运行for循环
-#pragma omp paraller for num_threads(core_num)
-  for (int i = 0; i < laser_cloud_corner_last_DS_num_; i++) {
-    ;
-  }
+/**
+ * 激光坐标系下的激光点，经过激光帧位姿，变换到世界坐标系下
+ */
+void MapOptmization::PointAssociateToMap(pcl::PointXYZI const *const pi,
+                                         pcl::PointXYZI *const po) {
+  po->x = trans_point_accociate_to_map_(0, 0) * pi->x +
+          trans_point_accociate_to_map_(0, 1) * pi->y +
+          trans_point_accociate_to_map_(0, 2) * pi->z;
+  po->y = trans_point_accociate_to_map_(1, 0) * pi->x +
+          trans_point_accociate_to_map_(1, 1) * pi->y +
+          trans_point_accociate_to_map_(1, 2) * pi->z;
+  po->z = trans_point_accociate_to_map_(2, 0) * pi->x +
+          trans_point_accociate_to_map_(2, 1) * pi->y +
+          trans_point_accociate_to_map_(2, 2) * pi->z;
+  po->intensity = pi->intensity;
 }

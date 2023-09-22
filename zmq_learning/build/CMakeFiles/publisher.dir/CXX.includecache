@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/struct_header.h
+
+/home/llx/learning/zmq_learning/src/publisher.cpp
+assert.h
+-
+stdio.h
+-
+stdlib.h
+-
+unistd.h
+-
+iostream
+-
+struct_header.h
+/home/llx/learning/zmq_learning/src/struct_header.h
+zmq.h
+/home/llx/learning/zmq_learning/src/zmq.h
+
