@@ -72,6 +72,7 @@
         "bit": "cpp",
         "shared_mutex": "cpp",
         "cfenv": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "strstream": "cpp"
     }
 }

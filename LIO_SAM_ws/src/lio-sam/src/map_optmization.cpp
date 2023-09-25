@@ -105,6 +105,14 @@ class MapOptmization : public ParamServer {
   pcl::PointCloud<pcl::PointXYZI>::Ptr coeff_sel_;
 
   Eigen::Affine3f trans_point_accociate_to_map_;
+  // 当前帧与局部map匹配上了的角点、参数、标记
+  std::vector<pcl::PointXYZI> laser_cloud_ori_corner_vec_;
+  std::vector<bool> laser_cloud_ori_corner_vec_flag_;
+  std::vector<pcl::PointXYZI> coeff_sel_corner_vec_;
+  // 当前帧与局部map匹配上了的平面点、参数、标记
+  std::vector<pcl::PointXYZI> laser_cloud_ori_surf_vec_;
+  std::vector<bool> laser_cloud_ori_surf_vec_flag_;
+  std::vector<pcl::PointXYZI> coeff_sel_surf_vec_;
 
  private:
   void PointcloudCallback(const lio_sam::cloud_infoConstPtr &msg_in);
@@ -188,6 +196,13 @@ MapOptmization::MapOptmization() {
 
   kdtree_corner_from_map_.reset(new pcl::PointCloud<pcl::PointXYZI>());
   kdtree_surface_from_map_.reset(new pcl::PointCloud<pcl::PointXYZI>());
+
+  laser_cloud_ori_corner_vec_.resize(N_SCAN * HORIZON_RESOLUTION);
+  laser_cloud_ori_corner_vec_flag_.resize(N_SCAN * HORIZON_RESOLUTION);
+  coeff_sel_corner_vec_.resize(N_SCAN * HORIZON_RESOLUTION);
+  laser_cloud_ori_surf_vec_.resize(N_SCAN * HORIZON_RESOLUTION);
+  laser_cloud_ori_surf_vec_flag_.resize(N_SCAN * HORIZON_RESOLUTION);
+  coeff_sel_surf_vec_.resize(N_SCAN * HORIZON_RESOLUTION);
 }
 
 MapOptmization::~MapOptmization() {}
@@ -620,7 +635,6 @@ void MapOptmization::CornerOptimization() {
 
         // 计算点到直线的距离，先确定直线（直线的方向就是最大的特征值对应的特征向量的方向）
         // 5个最近的局部地图中角点的几何中心点，沿着特征向量（直线方向）方向，前后各取一个点
-        // ?: 这样选的3个点，难道不是在一条直线上吗？
         float x1 = cx + 0.1 * matV1.at<float>(0, 0);
         float y1 = cy + 0.1 * matV1.at<float>(0, 1);
         float z1 = cz + 0.1 * matV1.at<float>(0, 2);
@@ -630,7 +644,6 @@ void MapOptmization::CornerOptimization() {
         float z2 = cz - 0.1 * matV1.at<float>(0, 2);
 
         // 计算三个点构成的 三角形的面积 =  2*|axb|=2*|a|*|b|*sin(theta)
-        // ?:怎么计算？
         float area_012 =
             sqrt(((x0 - x1) * (y0 - y2) - (x0 - x2) * (y0 - y1)) *
                      ((x0 - x1) * (y0 - y2) - (x0 - x2) * (y0 - y1)) +
@@ -638,13 +651,146 @@ void MapOptmization::CornerOptimization() {
                      ((x0 - x1) * (z0 - z2) - (x0 - x2) * (z0 - z1)) +
                  ((y0 - y1) * (z0 - z2) - (y0 - y2) * (z0 - z1)) *
                      ((y0 - y1) * (z0 - z2) - (y0 - y2) * (z0 - z1)));
+
+        // 三角形底边长
+        float l12 = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) +
+                         (z1 - z2) * (z1 - z2));
+        // 三角形的高，也就是点到直线距离
+        float ld2 = area_012 / l12;
+        // note: 距离惩戒因子：距离越大，s越小，是个距离惩罚因子（权重）
+        float s = 1 - 0.9 * fabs(ld2);
+        // ?: 如何计算？
+        // 两次叉积，得到点到直线的垂线段单位向量，x分量，下面同理
+        float la =
+            ((y1 - y2) * ((x0 - x1) * (y0 - y2) - (x0 - x2) * (y0 - y1)) +
+             (z1 - z2) * ((x0 - x1) * (z0 - z2) - (x0 - x2) * (z0 - z1))) /
+            area_012 / l12;
+
+        float lb =
+            -((x1 - x2) * ((x0 - x1) * (y0 - y2) - (x0 - x2) * (y0 - y1)) -
+              (z1 - z2) * ((y0 - y1) * (z0 - z2) - (y0 - y2) * (z0 - z1))) /
+            area_012 / l12;
+
+        float lc =
+            -((x1 - x2) * ((x0 - x1) * (z0 - z2) - (x0 - x2) * (z0 - z1)) +
+              (y1 - y2) * ((y0 - y1) * (z0 - z2) - (y0 - y2) * (z0 - z1))) /
+            area_012 / l12;
+
+        // 点到直线的垂线段单位向量
+        coeff.x = s * la;
+        coeff.y = s * lb;
+        coeff.z = s * lc;
+
+        // 点到直线距离（加入惩戒项）
+        coeff.intensity = s * ld2;
+
+        // 距离越小，s越大
+        if (s > 0.1) {
+          // 当前激光帧角点，加入匹配集合中
+          laser_cloud_ori_corner_vec_[i] = point_ori;
+          // 角点的参数(点到直线的垂线段单位向量， 加入惩戒项后的距离)
+          laser_cloud_ori_corner_vec_flag_[i] = true;
+          coeff_sel_corner_vec_[i] = coeff;
+        }
       }
     }
   }
 }
 
 // 平面特征点优化
-void MapOptmization::SurfaceOptimization() {}
+void MapOptmization::SurfaceOptimization() {
+  UpdatePointAssociateToMap();
+#pragma omp paraller for num_threads(core_num)
+  for (int i = 0; i < laser_cloud_surface_last_DS_num_; i++) {
+    pcl::PointXYZI point_ori, point_sel, coeff;
+    std::vector<int> point_search_index;
+    std::vector<float> point_search_sq_dis;
+    // 角点 (lidar frame)
+    point_ori = laser_cloud_surface_last_DS_->points[i];
+    // 转换到 map 坐标系下
+    PointAssociateToMap(&point_ori, &point_sel);
+    // 在local surface map中找相邻最近的5个角点
+    kdtree_surface_from_map_->nearestKSearch(point_sel, 5, point_search_index,
+                                             point_search_sq_dis);
+    // 5个对应点存起来
+    Eigen::Matrix<float, 5, 3> matA0;
+    Eigen::Matrix<float, 5, 1> matB0;
+    Eigen::Vector3f matX0;
+
+    matA0.setZero();
+    matB0.fill(-1);
+    matX0.setZero();
+
+    // 要求距离都小于1m
+    if (point_search_sq_dis[4] < 1.0) {
+      for (int j = 0; j < 5; j++) {
+        matA0(j, 0) =
+            laser_cloud_corner_from_map_DS_->points[point_search_index[j]].x;
+        matA0(j, 1) =
+            laser_cloud_corner_from_map_DS_->points[point_search_index[j]].y;
+        matA0(j, 2) =
+            laser_cloud_corner_from_map_DS_->points[point_search_index[j]].z;
+      }
+      // 假设平面方程为ax+by+cz+1=0，这里就是求方程的系数abc，d=1
+      matX0 = matA0.colPivHouseholderQr().solve(matB0);
+      // 平面方程的系数，也是法向量的分量
+      float pa = matX0(0, 0);
+      float pb = matX0(1, 0);
+      float pc = matX0(2, 0);
+      float pd = 1;
+
+      // 单位法向量
+      float ps = sqrt(pa * pa + pb * pb + pc * pc);
+      pa /= ps;
+      pb /= ps;
+      pc /= ps;
+      pd /= ps;
+
+      // note:检查平面是否合格，如果5个点中有点到平面的距离超过0.2m，那么认为这些点太分散了，不构成平面
+      bool plane_valid = true;
+      for (int j = 0; j < 5; j++) {
+        if (fabs(pa * laser_cloud_surface_from_map_DS_
+                          ->points[point_search_index[j]]
+                          .x +
+                 pb * laser_cloud_surface_from_map_DS_
+                          ->points[point_search_index[j]]
+                          .y +
+                 pc * laser_cloud_surface_from_map_DS_
+                          ->points[point_search_index[j]]
+                          .z +
+                 pd) > 0.2) {
+          plane_valid = false;
+          break;
+        }
+      }
+
+      if (plane_valid) {
+        // 当前激光帧点到平面距离(带入直线方程)
+        float pd2 = pa * point_sel.x + pb * point_sel.y + pc * point_sel.z + pd;
+        // 平面因子惩戒项
+        float s = 1 - 0.9 * fabs(pd2) /
+                          sqrt(sqrt(point_sel.x * point_sel.x +
+                                    point_sel.y * point_sel.y +
+                                    point_sel.z * point_sel.z));
+
+        // 点到平面垂线单位法向量（其实等价于平面法向量）
+        coeff.x = s * pa;
+        coeff.y = s * pb;
+        coeff.z = s * pc;
+        // 点到平面距离
+        coeff.intensity = s * pd2;
+
+        if (s > 0.1) {
+          // 当前激光帧平面点，加入匹配集合中
+          laser_cloud_ori_surf_vec_[i] = point_ori;
+          // 参数
+          coeff_sel_surf_vec_[i] = coeff;
+          laser_cloud_ori_surf_vec_flag_[i] = true;
+        }
+      }
+    }
+  }
+}
 
 void MapOptmization::CombineOptimizationCoeffs() {}
 

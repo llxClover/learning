@@ -535,11 +535,11 @@
 			[
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel ..."
 				}
 			],
 			"type" : "STRING",
-			"value" : "Debug"
+			"value" : ""
 		},
 		{
 			"name" : "CMAKE_CACHEFILE_DIR",
@@ -1015,11 +1015,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "Enable/Disable output of compile commands during generation."
 				}
 			],
 			"type" : "BOOL",
-			"value" : "TRUE"
+			"value" : "OFF"
 		},
 		{
 			"name" : "CMAKE_EXTRA_GENERATOR",
@@ -2091,7 +2091,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "[TRUE][TRUE][c ][v()]"
+			"value" : "[TRUE][TRUE][c ][v4.5()]"
 		},
 		{
 			"name" : "FIND_PACKAGE_MESSAGE_DETAILS_OpenMP_C",
@@ -2103,7 +2103,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "[-fopenmp][/usr/lib/gcc/x86_64-linux-gnu/8/libgomp.so][/usr/lib/x86_64-linux-gnu/libpthread.so][v()]"
+			"value" : "[-fopenmp][/usr/lib/gcc/x86_64-linux-gnu/8/libgomp.so][/usr/lib/x86_64-linux-gnu/libpthread.so][v4.5()]"
 		},
 		{
 			"name" : "FIND_PACKAGE_MESSAGE_DETAILS_OpenMP_CXX",
@@ -2115,7 +2115,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "[-fopenmp][/usr/lib/gcc/x86_64-linux-gnu/8/libgomp.so][/usr/lib/x86_64-linux-gnu/libpthread.so][v()]"
+			"value" : "[-fopenmp][/usr/lib/gcc/x86_64-linux-gnu/8/libgomp.so][/usr/lib/x86_64-linux-gnu/libpthread.so][v4.5()]"
 		},
 		{
 			"name" : "FIND_PACKAGE_MESSAGE_DETAILS_PCL_2D",
